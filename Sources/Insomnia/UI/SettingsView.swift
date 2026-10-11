@@ -111,7 +111,7 @@ struct SettingsView: View {
                 }
             }
             HStack {
-                TextField("Добавить пресет (30m, 2h, 1h30m, 3d)", text: $newPreset)
+                TextField("Добавить время (30м, 2ч, 1ч30м, 3д)", text: $newPreset)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit(addPreset)
                 Button("Добавить", action: addPreset)
