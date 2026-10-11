@@ -118,8 +118,8 @@ final class IntegrationWiringTests: XCTestCase {
         services.cancelBrowserTasks()
 
         XCTAssertEqual(notifier.posts.map(\.title), ["Browser not relaunched"])
-        XCTAssertEqual(notifier.posts.map(\.body), ["Chrome is not running. Nothing was quit or relaunched."])
-        XCTAssertEqual(services.status.relaunchProblems, ["com.google.Chrome": "Chrome is not running. Nothing was quit or relaunched."])
+        XCTAssertEqual(notifier.posts.map(\.body), ["Chrome не запущен. Ничего не закрывалось и не перезапускалось."])
+        XCTAssertEqual(services.status.relaunchProblems, ["com.google.Chrome": "Chrome не запущен. Ничего не закрывалось и не перезапускалось."])
         XCTAssertEqual(processes.quitRequests.count, 0)
         XCTAssertEqual(processes.launches.count, 0)
     }
@@ -148,7 +148,7 @@ final class IntegrationWiringTests: XCTestCase {
 
         await services.relaunchUnthrottled(Self.chrome)
 
-        let reason = "Chrome quit but could not be relaunched: LSOpenURLsWithRole() failed with error -10810. Open it yourself."
+        let reason = "Chrome закрылся, но его не удалось запустить снова: LSOpenURLsWithRole() failed with error -10810. Откройте его сами."
         XCTAssertEqual(source.relaunchProblems, [reason])
         let items = StatusItemController.menuItems(manager: h.makeManager(), status: source)
         // The scan after the relaunch lists whatever browsers this Mac is
@@ -177,7 +177,7 @@ final class IntegrationWiringTests: XCTestCase {
         services.status.hotspotPasswordReport = HotspotPasswordReport(ssid: "Phone", problem: .unreadable)
         // A debug build also has the lid simulation line.
         func warnings() -> [String] {
-            StatusItemController.menuItems(manager: manager, status: source).map(\.title).filter { $0.contains("Hotspot") }
+            StatusItemController.menuItems(manager: manager, status: source).map(\.title).filter { $0.contains("точки доступа") }
         }
 
         XCTAssertEqual(warnings(), [HotspotPasswordProblem.unreadable.menuLine])
@@ -261,7 +261,7 @@ final class IntegrationWiringTests: XCTestCase {
         let processes = FakeBrowserProcesses(pids: [42])
         processes.start(bundleId: "com.brave.Browser", pid: 50)
         let services = Self.services(home: home, notifier: notifier, processes: processes)
-        services.status.relaunchProblems["com.microsoft.edgemac"] = "Edge is not running. Nothing was quit or relaunched."
+        services.status.relaunchProblems["com.microsoft.edgemac"] = "Edge не запущен. Ничего не закрывалось и не перезапускалось."
         processes.quits = false
         processes.holdsNextQuit = true
         let first = Task { await services.relaunchUnthrottled(Self.chrome) }
@@ -273,11 +273,11 @@ final class IntegrationWiringTests: XCTestCase {
         processes.releaseQuit()
         await first.value
 
-        let brave = "Brave quit but could not be relaunched: boom. Open it yourself."
-        let chrome = "Chrome did not quit within 10 s, so nothing was relaunched. It may still quit later. If it does, open it again yourself."
+        let brave = "Brave закрылся, но его не удалось запустить снова: boom. Откройте его сами."
+        let chrome = "Chrome не закрылся за 10 с, поэтому перезапуска не было. Он может закрыться позже. Если это случится, откройте его снова сами."
         XCTAssertEqual(notifier.posts.map(\.body), [brave, chrome])
         XCTAssertEqual(LiveStatusSource(services: services).relaunchProblems, [
-            brave, chrome, "Edge is not running. Nothing was quit or relaunched.",
+            brave, chrome, "Edge не запущен. Ничего не закрывалось и не перезапускалось.",
         ])
     }
 
@@ -353,7 +353,7 @@ final class IntegrationWiringTests: XCTestCase {
         await services.relaunchUnthrottled(Self.chrome)
 
         XCTAssertEqual(notifier.posts.map(\.title), ["Browser not relaunched"])
-        XCTAssertEqual(notifier.posts.map(\.body), ["Chrome did not quit within 10 s, so nothing was relaunched. It may still quit later. If it does, open it again yourself."])
+        XCTAssertEqual(notifier.posts.map(\.body), ["Chrome не закрылся за 10 с, поэтому перезапуска не было. Он может закрыться позже. Если это случится, откройте его снова сами."])
         XCTAssertEqual(processes.terminated, [[42]])
         XCTAssertEqual(processes.launches.count, 0)
     }
@@ -415,7 +415,7 @@ final class IntegrationWiringTests: XCTestCase {
         await services.relaunchUnthrottled(Self.chrome)
 
         XCTAssertEqual(processes.quitRequests.count, 1, "the list was cleared during the quit wait")
-        XCTAssertEqual(notifier.posts.map(\.body), ["Chrome did not quit within 10 s, so nothing was relaunched. It may still quit later. If it does, open it again yourself."])
+        XCTAssertEqual(notifier.posts.map(\.body), ["Chrome не закрылся за 10 с, поэтому перезапуска не было. Он может закрыться позже. Если это случится, откройте его снова сами."])
     }
 
     @MainActor
@@ -482,7 +482,7 @@ final class IntegrationWiringTests: XCTestCase {
     func testWiFiStatusNameExplainsLocationRedaction() {
         XCTAssertEqual(
             WiFiStatusName.display(ssid: nil, locationAuthorized: false),
-            "on (name hidden until Location is allowed)"
+            "включён (имя скрыто, пока не разрешена геолокация)"
         )
         XCTAssertEqual(WiFiStatusName.display(ssid: "Office", locationAuthorized: false), "Office")
         XCTAssertNil(WiFiStatusName.display(ssid: nil, locationAuthorized: true))
@@ -495,7 +495,7 @@ final class IntegrationWiringTests: XCTestCase {
         let permission = LocationPermission(authorizationStatus: .authorizedAlways)
         XCTAssertTrue(permission.isAuthorized)
         XCTAssertFalse(permission.isDenied)
-        XCTAssertEqual(permission.statusDescription, "Allowed")
+        XCTAssertEqual(permission.statusDescription, "Разрешена")
     }
 
     @MainActor
@@ -503,11 +503,11 @@ final class IntegrationWiringTests: XCTestCase {
         let denied = LocationPermission(authorizationStatus: .denied)
         XCTAssertFalse(denied.isAuthorized)
         XCTAssertTrue(denied.isDenied)
-        XCTAssertEqual(denied.statusDescription, "Denied")
+        XCTAssertEqual(denied.statusDescription, "Запрещена")
 
         let undetermined = LocationPermission(authorizationStatus: .notDetermined)
         XCTAssertFalse(undetermined.isAuthorized)
-        XCTAssertEqual(undetermined.statusDescription, "Not requested")
+        XCTAssertEqual(undetermined.statusDescription, "Не запрашивалась")
     }
 }
 

@@ -213,13 +213,13 @@ final class FloorRuleDriverTests: XCTestCase {
         // The current mode is read before it is taken over.
         XCTAssertEqual(h.guardFake.calls, ["disablesleep 1", "pmset -g custom", "lowpowermode 1"])
         XCTAssertEqual(try h.store.loadState()?.lowPowerSetByUs, true)
-        XCTAssertEqual(h.notifier.posts.last?.title, "Low Power Mode on")
+        XCTAssertEqual(h.notifier.posts.last?.title, "Режим энергосбережения включён")
         XCTAssertTrue(h.notifier.posts.last?.body.contains("35%") ?? false)
 
         await driver.run(battery: .percent(35), isCharging: true, thermal: .nominal, lidClosed: false)
         XCTAssertEqual(h.guardFake.calls.last, "lowpowermode 0")
         XCTAssertEqual(try h.store.loadState()?.lowPowerSetByUs, false)
-        XCTAssertEqual(h.notifier.posts.last?.title, "Low Power Mode off")
+        XCTAssertEqual(h.notifier.posts.last?.title, "Режим энергосбережения выключен")
     }
 
     func testLowPowerFailureRollsBackJournal() async throws {
@@ -229,7 +229,7 @@ final class FloorRuleDriverTests: XCTestCase {
         let driver = FloorRuleDriver(manager: m, notifier: h.notifier)
         await driver.run(battery: .percent(35), isCharging: false, thermal: .nominal, lidClosed: false)
         XCTAssertEqual(try h.store.loadState()?.lowPowerSetByUs, false)
-        XCTAssertFalse(h.notifier.posts.contains { $0.title == "Low Power Mode on" })
+        XCTAssertFalse(h.notifier.posts.contains { $0.title == "Режим энергосбережения включён" })
     }
 
     func testEndFloorEndsSessionWithReason() async throws {
@@ -240,7 +240,7 @@ final class FloorRuleDriverTests: XCTestCase {
         XCTAssertFalse(m.isActive)
         XCTAssertNil(try h.store.loadSession())
         XCTAssertEqual(h.guardFake.calls.last, "disablesleep 0")
-        XCTAssertEqual(h.notifier.posts.last?.title, "Session ended")
+        XCTAssertEqual(h.notifier.posts.last?.title, "Сессия завершена")
         XCTAssertTrue(h.notifier.posts.last?.body.contains("10%") ?? false)
     }
 
@@ -256,9 +256,9 @@ final class FloorRuleDriverTests: XCTestCase {
         XCTAssertFalse(m.isActive)
         XCTAssertNil(try h.store.loadSession())
         XCTAssertEqual(h.guardFake.calls.last, "disablesleep 0")
-        XCTAssertEqual(h.notifier.posts.last?.title, "Session ended")
+        XCTAssertEqual(h.notifier.posts.last?.title, "Сессия завершена")
         let body = try XCTUnwrap(h.notifier.posts.last?.body)
-        XCTAssertTrue(body.contains("could not be read"), body)
+        XCTAssertTrue(body.contains("не удалось прочитать"), body)
         XCTAssertTrue(body.contains("10%"), body)
     }
 
@@ -271,7 +271,7 @@ final class FloorRuleDriverTests: XCTestCase {
         XCTAssertFalse(m.isActive)
         XCTAssertEqual(try h.store.loadState(), RuntimeState.clean)
         XCTAssertTrue(h.guardFake.calls.contains("lowpowermode 0"))
-        XCTAssertTrue(h.notifier.posts.last?.body.contains("critical") ?? false)
+        XCTAssertTrue(h.notifier.posts.last?.body.contains("Критический") ?? false)
     }
 
     func testNoSessionDoesNothing() async throws {
@@ -301,7 +301,7 @@ final class FloorRuleDriverTests: XCTestCase {
         XCTAssertEqual(try h.store.loadState()?.lowPowerSetByUs, false)
         XCTAssertFalse(h.guardFake.lowPowerOn, "Low Power Mode left on after the session ended")
         XCTAssertEqual(try h.store.loadState(), RuntimeState.clean)
-        XCTAssertFalse(h.notifier.posts.contains { $0.title == "Low Power Mode on" })
+        XCTAssertFalse(h.notifier.posts.contains { $0.title == "Режим энергосбережения включён" })
     }
 
     /// Low Power Mode the user already had on is theirs: Insomnia neither
@@ -315,7 +315,7 @@ final class FloorRuleDriverTests: XCTestCase {
 
         XCTAssertEqual(h.guardFake.calls, ["disablesleep 1", "pmset -g custom"])
         XCTAssertEqual(try h.store.loadState()?.lowPowerSetByUs, false)
-        XCTAssertFalse(h.notifier.posts.contains { $0.title == "Low Power Mode on" })
+        XCTAssertFalse(h.notifier.posts.contains { $0.title == "Режим энергосбережения включён" })
 
         await m.end(reason: .user)
         XCTAssertTrue(h.guardFake.lowPowerOn, "user's Low Power Mode was switched off at session end")
@@ -333,7 +333,7 @@ final class FloorRuleDriverTests: XCTestCase {
 
         XCTAssertFalse(h.guardFake.calls.contains("lowpowermode 1"))
         XCTAssertEqual(try h.store.loadState()?.lowPowerSetByUs, false)
-        XCTAssertFalse(h.notifier.posts.contains { $0.title == "Low Power Mode on" })
+        XCTAssertFalse(h.notifier.posts.contains { $0.title == "Режим энергосбережения включён" })
     }
 
     /// `lowpowermode 1` applied the mode and then failed (a timeout). The
@@ -381,7 +381,7 @@ final class FloorRuleDriverTests: XCTestCase {
         XCTAssertEqual(h.guardFake.calls, ["disablesleep 1", "pmset -g custom", "lowpowermode 1"])
         XCTAssertTrue(h.guardFake.lowPowerOn)
         XCTAssertEqual(try h.store.loadState()?.lowPowerSetByUs, true)
-        XCTAssertFalse(h.notifier.posts.contains { $0.title == "Low Power Mode on" })
+        XCTAssertFalse(h.notifier.posts.contains { $0.title == "Режим энергосбережения включён" })
 
         await m.end(reason: .user)
         XCTAssertFalse(h.guardFake.lowPowerOn, "lid-caused Low Power Mode left on after the session ended")
@@ -420,12 +420,12 @@ final class FloorRuleDriverTests: XCTestCase {
         await m.start(duration: 3600)
         let driver = FloorRuleDriver(manager: m, notifier: h.notifier)
         await driver.run(battery: .percent(35), isCharging: false, thermal: .nominal, lidClosed: true)
-        XCTAssertEqual(h.notifier.posts.last?.title, "Low Power Mode on")
+        XCTAssertEqual(h.notifier.posts.last?.title, "Режим энергосбережения включён")
         XCTAssertTrue(h.notifier.posts.last?.body.contains("35%") ?? false)
 
         await driver.run(battery: .percent(35), isCharging: true, thermal: .nominal, lidClosed: false)
-        XCTAssertEqual(h.notifier.posts.last?.title, "Low Power Mode off")
-        XCTAssertEqual(h.notifier.posts.last?.body, "Charger connected.")
+        XCTAssertEqual(h.notifier.posts.last?.title, "Режим энергосбережения выключен")
+        XCTAssertEqual(h.notifier.posts.last?.body, "Зарядка подключена.")
     }
 
     func testLidOptionOffLeavesLowPowerAlone() async throws {
@@ -488,8 +488,8 @@ final class FloorRuleDriverTests: XCTestCase {
         XCTAssertFalse(h.guardFake.lowPowerOn)
         XCTAssertEqual(h.guardFake.calls.last, "lowpowermode 0")
         XCTAssertEqual(h.notifier.posts.count, 1)
-        XCTAssertEqual(h.notifier.posts.last?.title, "Low Power Mode off")
-        XCTAssertEqual(h.notifier.posts.last?.body, "Charger connected.")
+        XCTAssertEqual(h.notifier.posts.last?.title, "Режим энергосбережения выключен")
+        XCTAssertEqual(h.notifier.posts.last?.body, "Зарядка подключена.")
     }
 
     /// The reverse: battery enable (announced), lid closes, charger
@@ -503,7 +503,7 @@ final class FloorRuleDriverTests: XCTestCase {
         await driver.run(battery: .percent(35), isCharging: false, thermal: .nominal, lidClosed: false)
         XCTAssertTrue(h.guardFake.lowPowerOn)
         XCTAssertEqual(h.notifier.posts.count, 1)
-        XCTAssertEqual(h.notifier.posts.last?.title, "Low Power Mode on")
+        XCTAssertEqual(h.notifier.posts.last?.title, "Режим энергосбережения включён")
 
         await driver.run(battery: .percent(35), isCharging: false, thermal: .nominal, lidClosed: true)
         await driver.run(battery: .percent(35), isCharging: true, thermal: .nominal, lidClosed: true)
@@ -531,8 +531,8 @@ final class FloorRuleDriverTests: XCTestCase {
 
         await driver.run(battery: .percent(80), isCharging: false, thermal: .fair, lidClosed: false)
         XCTAssertFalse(h.guardFake.lowPowerOn)
-        XCTAssertEqual(h.notifier.posts.last?.title, "Low Power Mode off")
-        XCTAssertEqual(h.notifier.posts.last?.body, "Back above the floor.")
+        XCTAssertEqual(h.notifier.posts.last?.title, "Режим энергосбережения выключен")
+        XCTAssertEqual(h.notifier.posts.last?.body, "Заряд снова выше порога.")
     }
 
     /// Flipping the lid option while the lid is closed takes effect on the

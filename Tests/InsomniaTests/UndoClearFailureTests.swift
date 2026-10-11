@@ -21,8 +21,8 @@ final class UndoClearFailureTests: XCTestCase {
 
     private func assertShown(_ m: SessionManager, _ prefix: String, file: StaticString = #filePath, line: UInt = #line) throws {
         let error = try XCTUnwrap(m.lastError, "the failed clear was not shown", file: file, line: line)
-        XCTAssertTrue(error.hasPrefix("\(prefix) but the journal entry could not be cleared"), error, file: file, line: line)
-        XCTAssertTrue(error.hasSuffix("it will be retried"), error, file: file, line: line)
+        XCTAssertTrue(error.hasPrefix("\(prefix), но запись в журнале не удалось убрать"), error, file: file, line: line)
+        XCTAssertTrue(error.hasSuffix("Попытка повторится"), error, file: file, line: line)
     }
 
     /// The end's `disablesleep 0` exits 0 and the clear fails: the end is
@@ -39,9 +39,9 @@ final class UndoClearFailureTests: XCTestCase {
         XCTAssertEqual(outcome, .incomplete(agentArmed: true))
         XCTAssertFalse(h.guardFake.sleepDisabled)
         XCTAssertEqual(try h.store.loadState()?.sleepDisabledByUs, true, "the entry went with the failed write")
-        try assertShown(m, "sleep restored")
+        try assertShown(m, "сон возвращён")
         let notice = try XCTUnwrap(h.notifier.posts.last)
-        XCTAssertTrue(notice.body.hasPrefix("sleep restored but the journal entry could not be cleared"), notice.body)
+        XCTAssertTrue(notice.body.hasPrefix("сон возвращён, но запись в журнале не удалось убрать"), notice.body)
 
         let again = await m.end(reason: .user)
         XCTAssertEqual(again, .restored)
@@ -66,7 +66,7 @@ final class UndoClearFailureTests: XCTestCase {
         try lockJournal(false)
         XCTAssertFalse(h.guardFake.lowPowerOn)
         XCTAssertEqual(try h.store.loadState()?.lowPowerSetByUs, true)
-        try assertShown(m, "low power mode cleared")
+        try assertShown(m, "режим энергосбережения сброшен")
     }
 
     /// A floor switching the mode off: `lowpowermode 0` exits 0 and the
@@ -84,7 +84,7 @@ final class UndoClearFailureTests: XCTestCase {
         XCTAssertTrue(off)
         XCTAssertFalse(h.guardFake.lowPowerOn)
         XCTAssertEqual(try h.store.loadState()?.lowPowerSetByUs, true)
-        try assertShown(m, "low power mode switched off")
+        try assertShown(m, "режим энергосбережения выключен")
     }
 
     /// `lowpowermode 1` applies and then fails; the rollback's
@@ -110,7 +110,7 @@ final class UndoClearFailureTests: XCTestCase {
         XCTAssertEqual(h.guardFake.calls.suffix(2), ["lowpowermode 1", "lowpowermode 0"])
         XCTAssertFalse(h.guardFake.lowPowerOn)
         XCTAssertEqual(try h.store.loadState()?.lowPowerSetByUs, true)
-        try assertShown(m, "low power mode switched off after the failed enable")
+        try assertShown(m, "режим энергосбережения выключен после неудачного включения")
     }
 
     /// Lid open: audio, display and keyboard written, frozen entries
@@ -119,11 +119,11 @@ final class UndoClearFailureTests: XCTestCase {
     func testLidUndoWhoseClearsFailSaysSo() async throws {
         let m = h.makeManager()
         let cases: [(String, (inout RuntimeState) -> Void)] = [
-            ("audio restored", { $0.savedOutputVolume = 0.4; $0.savedMuted = true }),
-            ("frozen processes resumed", { $0.frozenProcesses = [FrozenProcess(pid: 9001, identity: FakeSleepGuard.identity(of: 9001))] }),
-            ("Docker Desktop has no frozen process left", { $0.dockerFrozen = true }),
-            ("display brightness restored", { $0.savedDisplayBrightness = 0.5 }),
-            ("keyboard backlight restored", { $0.savedKeyboardBrightness = 0.3 }),
+            ("звук восстановлен", { $0.savedOutputVolume = 0.4; $0.savedMuted = true }),
+            ("замороженные процессы возобновлены", { $0.frozenProcesses = [FrozenProcess(pid: 9001, identity: FakeSleepGuard.identity(of: 9001))] }),
+            ("у Docker Desktop не осталось замороженных процессов", { $0.dockerFrozen = true }),
+            ("яркость экрана восстановлена", { $0.savedDisplayBrightness = 0.5 }),
+            ("подсветка клавиатуры восстановлена", { $0.savedKeyboardBrightness = 0.3 }),
         ]
         for (prefix, entry) in cases {
             var s = RuntimeState.clean
@@ -159,7 +159,7 @@ final class UndoClearFailureTests: XCTestCase {
         try lockJournal(true)
         await m.undoLidActions()
         try lockJournal(false)
-        try assertShown(m, "audio restored")
+        try assertShown(m, "звук восстановлен")
         let line = m.lastError
 
         let on = await m.setLowPower(true)
@@ -176,7 +176,7 @@ final class UndoClearFailureTests: XCTestCase {
         try lockJournal(true)
         await m.undoLidActions()
         try lockJournal(false)
-        try assertShown(m, "audio restored")
+        try assertShown(m, "звук восстановлен")
         m.fail("a newer failure")
         await m.undoLidActions()
         XCTAssertNil(try h.store.loadState()?.savedOutputVolume)
@@ -198,12 +198,12 @@ final class UndoClearFailureTests: XCTestCase {
         try lockJournal(true)
         await m.undoLidActions()
         try lockJournal(false)
-        try assertShown(m, "display brightness restored")
+        try assertShown(m, "яркость экрана восстановлена")
 
         let off = await m.setLowPower(false)
         XCTAssertTrue(off)
         XCTAssertEqual(try h.store.loadState()?.savedDisplayBrightness, 0.5)
-        try assertShown(m, "display brightness restored")
+        try assertShown(m, "яркость экрана восстановлена")
 
         await m.undoLidActions()
         let after = try XCTUnwrap(h.store.loadState())

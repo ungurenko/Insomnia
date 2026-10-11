@@ -62,12 +62,12 @@ final class PlaceholderStatus: StatusSource {
 enum StatusLines {
     /// "Lid: closed · 4.1 W · Wi-Fi: iPhone". Unknown parts are omitted.
     static func machine(lidClosed: Bool, watts: Double?, wifiSSID: String?, batteryPercent: Int?, isCharging: Bool) -> String {
-        var parts: [String] = ["Lid: \(lidClosed ? "closed" : "open")"]
+        var parts: [String] = ["Крышка: \(lidClosed ? "закрыта" : "открыта")"]
         if let w = watts {
-            parts.append(String(format: "%.1f W", w))
+            parts.append(String(format: "%.1f Вт", w))
         }
         if let p = batteryPercent {
-            parts.append(isCharging ? "\(p)% charging" : "\(p)%")
+            parts.append(isCharging ? "\(p)% заряжается" : "\(p)%")
         }
         if let ssid = wifiSSID, !ssid.isEmpty {
             parts.append("Wi-Fi: \(ssid)")
@@ -75,17 +75,24 @@ enum StatusLines {
         return parts.joined(separator: " \u{00B7} ")
     }
 
+    /// Russian plural form: "заморожено 1 приложение / 2 приложения / 5 приложений".
+    static func frozenApps(_ n: Int) -> String {
+        let mod10 = n % 10, mod100 = n % 100
+        let word = (mod10 == 1 && mod100 != 11) ? "приложение" : ((2...4).contains(mod10) && !(12...14).contains(mod100)) ? "приложения" : "приложений"
+        return "заморожено \(n) \(word)"
+    }
+
     /// "3 apps frozen · Docker paused", or nil when nothing is held.
     static func actions(frozenCount: Int, dockerPaused: Bool, lastGap: TimeInterval?) -> String? {
         var parts: [String] = []
         if frozenCount > 0 {
-            parts.append(frozenCount == 1 ? "1 app frozen" : "\(frozenCount) apps frozen")
+            parts.append(Self.frozenApps(frozenCount))
         }
         if dockerPaused {
-            parts.append("Docker paused")
+            parts.append("Docker на паузе")
         }
         if let gap = lastGap, gap > 0 {
-            parts.append("last gap \(Int(gap.rounded()))s")
+            parts.append("последний обрыв \(Int(gap.rounded())) с")
         }
         return parts.isEmpty ? nil : parts.joined(separator: " \u{00B7} ")
     }
@@ -96,10 +103,10 @@ enum StatusLines {
         let names: String
         switch browsers.count {
         case 1: names = browsers[0]
-        case 2: names = "\(browsers[0]) and \(browsers[1])"
-        default: names = browsers.dropLast().joined(separator: ", ") + ", and " + browsers.last!
+        case 2: names = "\(browsers[0]) и \(browsers[1])"
+        default: names = browsers.dropLast().joined(separator: ", ") + " и " + browsers.last!
         }
-        return "\u{26A0} \(names) \(browsers.count == 1 ? "is" : "are") throttled"
+        return "\u{26A0} \(browsers.count == 1 ? "Замедлен" : "Замедлены"): \(names)"
     }
 }
 
@@ -117,11 +124,11 @@ enum SleepHeldLine {
     static func line(sessionActive: Bool, sleepHeld: Bool) -> Line? {
         switch (sessionActive, sleepHeld) {
         case (true, true):
-            Line(text: "Sleep held per journal \u{2014} not verified live", isWarning: false)
+            Line(text: "Сон отключён по журналу \u{2014} вживую не проверено", isWarning: false)
         case (true, false):
-            Line(text: "Sleep is not held \u{2014} this session is not keeping the Mac awake", isWarning: true)
+            Line(text: "Сон не отключён \u{2014} эта сессия не удерживает Mac от сна", isWarning: true)
         case (false, true):
-            Line(text: "Sleep still held with no session", isWarning: true)
+            Line(text: "Сон всё ещё отключён, хотя сессии нет", isWarning: true)
         case (false, false):
             nil
         }
@@ -133,7 +140,7 @@ enum SleepHeldLine {
 enum WiFiStatusName {
     static func display(ssid: String?, locationAuthorized: Bool) -> String? {
         if let ssid, !ssid.isEmpty { return ssid }
-        return locationAuthorized ? nil : "on (name hidden until Location is allowed)"
+        return locationAuthorized ? nil : "включён (имя скрыто, пока не разрешена геолокация)"
     }
 }
 

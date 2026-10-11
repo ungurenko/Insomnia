@@ -127,7 +127,7 @@ final class ReconcileLidGatingTests: XCTestCase {
         XCTAssertEqual(h.procs.resumed, [[111]])
         XCTAssertEqual(h.procs.signaled, [111])
         XCTAssertEqual(try h.store.loadState(), RuntimeState.clean)
-        XCTAssertEqual(h.notifier.posts.last?.title, "Session restored")
+        XCTAssertEqual(h.notifier.posts.last?.title, "Сессия восстановлена")
     }
 
     func testEndPostsNotificationWithReason() async throws {
@@ -135,8 +135,8 @@ final class ReconcileLidGatingTests: XCTestCase {
         await m.start(duration: 3600)
         await m.end(reason: .user)
         XCTAssertEqual(h.notifier.posts.count, 1)
-        XCTAssertEqual(h.notifier.posts[0].title, "Session ended")
-        XCTAssertTrue(h.notifier.posts[0].body.contains("Ended by you"))
+        XCTAssertEqual(h.notifier.posts[0].title, "Сессия завершена")
+        XCTAssertTrue(h.notifier.posts[0].body.contains("Завершено вами"))
     }
 
     /// A session that ends while the lid is shut must not leave the 1 Hz

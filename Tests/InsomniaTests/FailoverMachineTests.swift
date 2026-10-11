@@ -91,11 +91,11 @@ final class FailoverMachineTests: XCTestCase {
     }
 
     func testHumanGap() {
-        XCTAssertEqual(FailoverMachine.humanGap(130), "2m 10s")
-        XCTAssertEqual(FailoverMachine.humanGap(45), "45s")
-        XCTAssertEqual(FailoverMachine.humanGap(3723), "1h 2m 3s")
-        XCTAssertEqual(FailoverMachine.humanGap(120), "2m")
-        XCTAssertEqual(FailoverMachine.humanGap(0), "0s")
+        XCTAssertEqual(FailoverMachine.humanGap(130), "2 мин 10 с")
+        XCTAssertEqual(FailoverMachine.humanGap(45), "45 с")
+        XCTAssertEqual(FailoverMachine.humanGap(3723), "1 ч 2 мин 3 с")
+        XCTAssertEqual(FailoverMachine.humanGap(120), "2 мин")
+        XCTAssertEqual(FailoverMachine.humanGap(0), "0 с")
     }
 }
 
@@ -129,7 +129,7 @@ final class NetworkFailoverDriverTests: XCTestCase {
 
         XCTAssertEqual(nudged.value, ["agents:0.0", "agents:0.1"])
         XCTAssertEqual(notifier.posts.count, 1)
-        XCTAssertEqual(notifier.posts[0].body, "Network was down 2m 10s. Nudged 2 tmux panes. Check GUI agents.")
+        XCTAssertEqual(notifier.posts[0].body, "Сети не было 2 мин 10 с. Подтолкнуто: 2 панели tmux. Проверьте приложения-агенты с окнами.")
         XCTAssertEqual(gaps.value, [130])
         XCTAssertEqual(n.lastGap, 130)
         let log = try String(contentsOf: home.paths.handoffsLog, encoding: .utf8)
@@ -316,7 +316,7 @@ final class NetworkFailoverDriverTests: XCTestCase {
         blocked.clock.advance(30)
         await blocked.driver.fireTimer().value
 
-        XCTAssertEqual(blocked.notifier.posts.map(\.title), ["Hotspot not joined"])
+        XCTAssertEqual(blocked.notifier.posts.map(\.title), ["Не удалось подключиться к точке доступа"])
         XCTAssertEqual(blocked.notifier.posts.map(\.body), [HotspotPasswordProblem.missing.explanation])
         XCTAssertEqual(blocked.driver.passwordReport, HotspotPasswordReport(ssid: "Phone", problem: .missing))
         XCTAssertEqual(blocked.joiner.calls, [])
@@ -470,8 +470,8 @@ final class NetworkFailoverDriverTests: XCTestCase {
         XCTAssertEqual(joiner.calls, [])
         XCTAssertEqual(n.passwordReport, HotspotPasswordReport(ssid: "Phone", problem: .missing))
         XCTAssertEqual(published.value, [.missing])
-        XCTAssertEqual(notifier.posts.map(\.title), ["Hotspot not joined"])
-        XCTAssertEqual(notifier.posts.map(\.body), ["No hotspot password is saved. Enter it in Settings."])
+        XCTAssertEqual(notifier.posts.map(\.title), ["Не удалось подключиться к точке доступа"])
+        XCTAssertEqual(notifier.posts.map(\.body), ["Пароль точки доступа не сохранён. Введите его в настройках."])
     }
 
     /// The item exists but belongs to another build (the keychain refuses
@@ -488,9 +488,9 @@ final class NetworkFailoverDriverTests: XCTestCase {
 
         XCTAssertEqual(joiner.calls, [])
         XCTAssertEqual(n.passwordReport?.problem, .unreadable)
-        XCTAssertEqual(n.passwordReport?.problem.menuLine, "\u{26A0} Hotspot password unreadable by this build: enter it again in Settings")
+        XCTAssertEqual(n.passwordReport?.problem.menuLine, "\u{26A0} Эта сборка не может прочитать пароль точки доступа: введите его заново в настройках")
         XCTAssertEqual(notifier.posts.map(\.body), [HotspotPasswordProblem.unreadable.explanation])
-        XCTAssertTrue(HotspotPasswordProblem.unreadable.explanation.contains("Enter it again in Settings"))
+        XCTAssertTrue(HotspotPasswordProblem.unreadable.explanation.contains("Введите пароль заново в настройках"))
     }
 
     /// Saving in Settings clears the problem at once, and a read that then
@@ -616,7 +616,7 @@ final class NetworkFailoverDriverTests: XCTestCase {
         let notifier = RecordingNotifier()
         let clock = FakeClock(Date(timeIntervalSince1970: 1_800_000_000))
         let n = driver(keychain: FakeKeychainStore(), joiner: joiner, notifier: notifier, clock: clock)
-        func skipped() -> Int { notifier.posts.filter { $0.title == "Hotspot not joined" }.count }
+        func skipped() -> Int { notifier.posts.filter { $0.title == "Не удалось подключиться к точке доступа" }.count }
 
         await n.simulate(satisfied: false)
         for _ in 0..<2 {

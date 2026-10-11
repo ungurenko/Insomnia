@@ -253,7 +253,7 @@ final class RecoverySafetyTests: XCTestCase {
         XCTAssertFalse(h.guardFake.sleepDisabled)
         XCTAssertEqual(try h.store.loadState(), RuntimeState.clean)
         let err = try XCTUnwrap(m.lastError)
-        XCTAssertTrue(err.contains("backstop") || err.contains("recovery agent"), err)
+        XCTAssertTrue(err.contains("агент восстановления"), err)
     }
 
     /// When `disablesleep 0` fails at end, the user must be told recovery is
@@ -267,10 +267,10 @@ final class RecoverySafetyTests: XCTestCase {
         XCTAssertEqual(outcome, .incomplete(agentArmed: true))
         XCTAssertTrue(h.guardFake.sleepDisabled)
         XCTAssertEqual(try h.store.loadState()?.sleepDisabledByUs, true)
-        XCTAssertFalse(h.notifier.posts.contains { $0.body.contains("back to normal") }, "\(h.notifier.posts)")
+        XCTAssertFalse(h.notifier.posts.contains { $0.body.contains("снова работает как обычно") }, "\(h.notifier.posts)")
         let last = try XCTUnwrap(h.notifier.posts.last)
         XCTAssertEqual(last.title, SessionManager.incompleteTitle)
-        XCTAssertTrue(last.body.contains("could not restore sleep"), last.body)
+        XCTAssertTrue(last.body.contains("Не удалось вернуть сон"), last.body)
         XCTAssertNotNil(m.lastError)
     }
 
@@ -289,8 +289,8 @@ final class RecoverySafetyTests: XCTestCase {
         XCTAssertEqual(h.guardFake.calls, ["disablesleep 1", "disablesleep 0"])
         XCTAssertNil(try h.store.loadSession())
         XCTAssertEqual(try h.store.loadState(), RuntimeState.clean)
-        XCTAssertTrue(try XCTUnwrap(m.lastError).contains("disable sleep"), m.lastError ?? "")
-        XCTAssertEqual(h.notifier.posts.last?.title, "Session not started")
+        XCTAssertTrue(try XCTUnwrap(m.lastError).contains("отключить сон"), m.lastError ?? "")
+        XCTAssertEqual(h.notifier.posts.last?.title, "Сессия не запущена")
     }
 
     /// Same failure, and the undo fails too: the entry stays journaled and
@@ -307,7 +307,7 @@ final class RecoverySafetyTests: XCTestCase {
         XCTAssertEqual(try h.store.loadState()?.sleepDisabledByUs, true, "journal dropped the entry while sleep is still disabled")
         XCTAssertEqual(h.backstop.arms, 2, "agent not re-confirmed for the dirty journal")
         XCTAssertEqual(h.notifier.posts.last?.title, SessionManager.incompleteTitle)
-        XCTAssertFalse(h.notifier.posts.contains { $0.body.contains("back to normal") }, "\(h.notifier.posts)")
+        XCTAssertFalse(h.notifier.posts.contains { $0.body.contains("снова работает как обычно") }, "\(h.notifier.posts)")
     }
 
     // MARK: Fresh journal under the lock
@@ -409,7 +409,7 @@ final class RecoverySafetyTests: XCTestCase {
         let last = try XCTUnwrap(h.notifier.posts.last)
         XCTAssertEqual(last.title, SessionManager.incompleteTitle)
         XCTAssertTrue(last.body.contains("session.json"), last.body)
-        XCTAssertFalse(h.notifier.posts.contains { $0.body.contains("back to normal") }, "\(h.notifier.posts)")
+        XCTAssertFalse(h.notifier.posts.contains { $0.body.contains("снова работает как обычно") }, "\(h.notifier.posts)")
 
         await m.start(duration: 60)
         XCTAssertNil(m.session, "a new session started over a pending end")
@@ -495,7 +495,7 @@ final class RecoverySafetyTests: XCTestCase {
         XCTAssertFalse(h.guardFake.sleepDisabled)
         XCTAssertEqual(try h.store.loadState(), RuntimeState.clean)
         XCTAssertNil(try h.store.loadSession())
-        XCTAssertEqual(h.notifier.posts.last?.title, "Session ended")
+        XCTAssertEqual(h.notifier.posts.last?.title, "Сессия завершена")
     }
 
     /// While an end is pending, a new session would be ended by the retry;
@@ -571,7 +571,7 @@ final class RecoverySafetyTests: XCTestCase {
         let names = try FileManager.default.contentsOfDirectory(atPath: h.home.paths.appSupport.path)
         XCTAssertFalse(names.contains { $0.contains("corrupt") }, "\(names)")
         XCTAssertEqual(h.notifier.posts.filter { $0.title == SessionManager.journalTitle }.count, 1, "\(h.notifier.posts)")
-        XCTAssertTrue(try XCTUnwrap(m.lastError).contains("refused"), m.lastError ?? "")
+        XCTAssertTrue(try XCTUnwrap(m.lastError).contains("отказ"), m.lastError ?? "")
     }
 
     /// The journal breaks while a session is live. The end must not guess:
@@ -592,7 +592,7 @@ final class RecoverySafetyTests: XCTestCase {
         XCTAssertEqual(h.guardFake.calls, ["disablesleep 1"], "pmset ran against an unreadable journal")
         XCTAssertTrue(h.guardFake.sleepDisabled)
         XCTAssertEqual(try Data(contentsOf: h.home.paths.stateFile), bytes, "the corrupt journal was rewritten")
-        XCTAssertFalse(h.notifier.posts.contains { $0.body.contains("back to normal") }, "\(h.notifier.posts)")
+        XCTAssertFalse(h.notifier.posts.contains { $0.body.contains("снова работает как обычно") }, "\(h.notifier.posts)")
         XCTAssertEqual(h.notifier.posts.last?.title, SessionManager.journalTitle)
         XCTAssertEqual(m.pendingEnd, .quit)
         XCTAssertFalse(m.quitRequested)

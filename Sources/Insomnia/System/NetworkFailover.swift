@@ -63,9 +63,9 @@ struct FailoverMachine: Sendable, Equatable {
         let total = Int(gap.rounded())
         let h = total / 3600, m = (total % 3600) / 60, s = total % 60
         var parts: [String] = []
-        if h > 0 { parts.append("\(h)h") }
-        if m > 0 { parts.append("\(m)m") }
-        if s > 0 || parts.isEmpty { parts.append("\(s)s") }
+        if h > 0 { parts.append("\(h) ч") }
+        if m > 0 { parts.append("\(m) мин") }
+        if s > 0 || parts.isEmpty { parts.append("\(s) с") }
         return parts.joined(separator: " ")
     }
 }
@@ -137,7 +137,7 @@ struct KeychainError: Error, LocalizedError, Sendable {
     let status: OSStatus
     var errorDescription: String? {
         let msg = SecCopyErrorMessageString(status, nil) as String? ?? "OSStatus \(status)"
-        return "keychain: \(msg)"
+        return "связка ключей: \(msg)"
     }
 
     /// The item is there but macOS would have to show a keychain prompt to
@@ -180,11 +180,11 @@ enum HotspotPasswordProblem: Equatable, Sendable {
     var explanation: String {
         switch self {
         case .missing:
-            "No hotspot password is saved. Enter it in Settings."
+            "Пароль точки доступа не сохранён. Введите его в настройках."
         case .unreadable:
-            "This build of Insomnia can't read the saved hotspot password (it was saved by another build, or the login keychain is locked). Enter it again in Settings."
+            "Эта сборка Insomnia не может прочитать сохранённый пароль точки доступа (его сохранила другая сборка, или связка ключей входа заблокирована). Введите пароль заново в настройках."
         case let .error(message):
-            "The hotspot password can't be read: \(message)"
+            "Не удаётся прочитать пароль точки доступа: \(message)"
         }
     }
 
@@ -192,11 +192,11 @@ enum HotspotPasswordProblem: Equatable, Sendable {
     var menuLine: String {
         switch self {
         case .missing:
-            "\u{26A0} Hotspot password not saved: enter it in Settings"
+            "\u{26A0} Пароль точки доступа не сохранён: введите его в настройках"
         case .unreadable:
-            "\u{26A0} Hotspot password unreadable by this build: enter it again in Settings"
+            "\u{26A0} Эта сборка не может прочитать пароль точки доступа: введите его заново в настройках"
         case let .error(message):
-            "\u{26A0} Hotspot password unreadable: \(message)"
+            "\u{26A0} Не удаётся прочитать пароль точки доступа: \(message)"
         }
     }
 
@@ -207,9 +207,9 @@ enum HotspotPasswordProblem: Equatable, Sendable {
         case .missing:
             nil
         case .unreadable:
-            "This build of Insomnia can't read the saved password: it was saved by another build, or the login keychain is locked. Enter it again and save. macOS may ask you to allow Insomnia to replace the old item."
+            "Эта сборка Insomnia не может прочитать сохранённый пароль: его сохранила другая сборка, или связка ключей входа заблокирована. Введите пароль заново и сохраните. macOS может попросить разрешить Insomnia заменить старую запись."
         case let .error(message):
-            "The saved password can't be read: \(message)"
+            "Не удаётся прочитать сохранённый пароль: \(message)"
         }
     }
 }
@@ -1062,7 +1062,14 @@ final class NetworkFailover {
         Log.error("hotspot join skipped: \(problem.explanation)")
         passwordReport = HotspotPasswordReport(ssid: ssid, problem: problem)
         guard notifiedThisOutage.insert(ssid).inserted else { return }
-        notifier.post(title: "Hotspot not joined", body: problem.explanation)
+        notifier.post(title: "Не удалось подключиться к точке доступа", body: problem.explanation)
+    }
+
+    /// "1 панель tmux", "2 панели tmux", "5 панелей tmux".
+    private static func tmuxPanes(_ n: Int) -> String {
+        let mod10 = n % 10, mod100 = n % 100
+        let word = (mod10 == 1 && mod100 != 11) ? "панель" : ((2...4).contains(mod10) && !(12...14).contains(mod100)) ? "панели" : "панелей"
+        return "\(n) \(word) tmux"
     }
 
     private func recovered(start: Date, gap: TimeInterval) async {
@@ -1082,10 +1089,10 @@ final class NetworkFailover {
             }
             // A keystroke that went out before the stop is still reported.
             if !stopped || count > 0 {
-                let panes = count == 1 ? "1 tmux pane" : "\(count) tmux panes"
+                let panes = Self.tmuxPanes(count)
                 notifier.post(
-                    title: "Network recovered",
-                    body: "Network was down \(FailoverMachine.humanGap(gap)). Nudged \(panes). Check GUI agents."
+                    title: "Сеть восстановлена",
+                    body: "Сети не было \(FailoverMachine.humanGap(gap)). Подтолкнуто: \(panes). Проверьте приложения-агенты с окнами."
                 )
             }
         }

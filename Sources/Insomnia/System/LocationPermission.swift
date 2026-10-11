@@ -42,11 +42,11 @@ final class LocationPermission: NSObject, @preconcurrency CLLocationManagerDeleg
 
     var statusDescription: String {
         switch authorizationStatus {
-        case .authorizedAlways: "Allowed"
-        case .denied: "Denied"
-        case .restricted: "Restricted"
-        case .notDetermined: "Not requested"
-        @unknown default: "Unknown"
+        case .authorizedAlways: "Разрешена"
+        case .denied: "Запрещена"
+        case .restricted: "Ограничена"
+        case .notDetermined: "Не запрашивалась"
+        @unknown default: "Неизвестно"
         }
     }
 

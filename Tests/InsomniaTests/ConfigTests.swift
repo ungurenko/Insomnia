@@ -250,14 +250,14 @@ final class ConfigTests: XCTestCase {
     /// The notice names each change and where to change it back.
     func testLidCloseNoticeNamesTheChangesAndWhereToChangeThemBack() {
         let both = LidCloseDefaultsChange(turnedOffFreezeAll: true, turnedOnMute: true)
-        XCTAssertEqual(LidCloseDefaultsChange.title, "Lid-close settings changed")
-        XCTAssertEqual(both.notificationBody, "This update changed two lid-close settings: \"Freeze every other app while the lid is closed\" is now off and \"Mute audio on lid close\" is now on. To change them back, choose Settings\u{2026} from the Insomnia menu bar icon and look under Lid-close actions.")
-        XCTAssertEqual(both.settingsLine, "This update changed two lid-close settings: \"Freeze every other app while the lid is closed\" is now off and \"Mute audio on lid close\" is now on. Both toggles are below.")
+        XCTAssertEqual(LidCloseDefaultsChange.title, "Настройки закрытия крышки изменены")
+        XCTAssertEqual(both.notificationBody, "Это обновление изменило две настройки закрытия крышки: «Замораживать все остальные приложения при закрытой крышке» теперь выключено и «Выключать звук при закрытии крышки» теперь включено. Чтобы вернуть их обратно, выберите «Настройки\u{2026}» в меню значка Insomnia и найдите раздел «Действия при закрытии крышки».")
+        XCTAssertEqual(both.settingsLine, "Это обновление изменило две настройки закрытия крышки: «Замораживать все остальные приложения при закрытой крышке» теперь выключено и «Выключать звук при закрытии крышки» теперь включено. Оба переключателя находятся ниже.")
         let mute = LidCloseDefaultsChange(turnedOffFreezeAll: false, turnedOnMute: true)
-        XCTAssertEqual(mute.notificationBody, "This update changed a lid-close setting: \"Mute audio on lid close\" is now on. To change it back, choose Settings\u{2026} from the Insomnia menu bar icon and look under Lid-close actions.")
-        XCTAssertEqual(mute.settingsLine, "This update changed a lid-close setting: \"Mute audio on lid close\" is now on. The toggle is below.")
+        XCTAssertEqual(mute.notificationBody, "Это обновление изменило настройку закрытия крышки: «Выключать звук при закрытии крышки» теперь включено. Чтобы вернуть её обратно, выберите «Настройки\u{2026}» в меню значка Insomnia и найдите раздел «Действия при закрытии крышки».")
+        XCTAssertEqual(mute.settingsLine, "Это обновление изменило настройку закрытия крышки: «Выключать звук при закрытии крышки» теперь включено. Переключатель находится ниже.")
         let freeze = LidCloseDefaultsChange(turnedOffFreezeAll: true, turnedOnMute: false)
-        XCTAssertEqual(freeze.changes, "\"Freeze every other app while the lid is closed\" is now off")
+        XCTAssertEqual(freeze.changes, "«Замораживать все остальные приложения при закрытой крышке» теперь выключено")
     }
 
     /// A config.json written before the display toggle existed keeps the
@@ -445,7 +445,7 @@ final class ConfigLoadTests: XCTestCase {
         XCTAssertEqual(try h.store.loadConfig(), m.config, "the update and its mark were not written back")
         XCTAssertEqual(h.notifier.posts.map(\.title), [LidCloseDefaultsChange.title])
         XCTAssertEqual(h.notifier.posts.first?.body, change.notificationBody)
-        XCTAssertTrue(log().contains(#"[info] insomnia: config.json: lid-close update: "Freeze every other app while the lid is closed" is now off and "Mute audio on lid close" is now on; saved"#), log())
+        XCTAssertTrue(log().contains(#"[info] insomnia: config.json: lid-close update: «Замораживать все остальные приложения при закрытой крышке» теперь выключено и «Выключать звук при закрытии крышки» теперь включено; saved"#), log())
 
         await m.reconcile()
         let again = h.makeManager()

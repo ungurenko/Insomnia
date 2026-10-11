@@ -178,15 +178,15 @@ final class UIStatusTests: XCTestCase {
     func testSleepHeldLine() {
         XCTAssertEqual(
             SleepHeldLine.line(sessionActive: true, sleepHeld: true),
-            SleepHeldLine.Line(text: "Sleep held per journal \u{2014} not verified live", isWarning: false)
+            SleepHeldLine.Line(text: "Сон отключён по журналу \u{2014} вживую не проверено", isWarning: false)
         )
         XCTAssertEqual(
             SleepHeldLine.line(sessionActive: true, sleepHeld: false),
-            SleepHeldLine.Line(text: "Sleep is not held \u{2014} this session is not keeping the Mac awake", isWarning: true)
+            SleepHeldLine.Line(text: "Сон не отключён \u{2014} эта сессия не удерживает Mac от сна", isWarning: true)
         )
         XCTAssertEqual(
             SleepHeldLine.line(sessionActive: false, sleepHeld: true),
-            SleepHeldLine.Line(text: "Sleep still held with no session", isWarning: true)
+            SleepHeldLine.Line(text: "Сон всё ещё отключён, хотя сессии нет", isWarning: true)
         )
         XCTAssertNil(SleepHeldLine.line(sessionActive: false, sleepHeld: false))
     }
@@ -212,30 +212,30 @@ final class UIStatusTests: XCTestCase {
     func testMachineLine() {
         XCTAssertEqual(
             StatusLines.machine(lidClosed: true, watts: 4.12, wifiSSID: "iPhone", batteryPercent: nil, isCharging: false),
-            "Lid: closed \u{00B7} 4.1 W \u{00B7} Wi-Fi: iPhone"
+            "Крышка: закрыта \u{00B7} 4.1 Вт \u{00B7} Wi-Fi: iPhone"
         )
         XCTAssertEqual(
             StatusLines.machine(lidClosed: false, watts: nil, wifiSSID: nil, batteryPercent: nil, isCharging: false),
-            "Lid: open"
+            "Крышка: открыта"
         )
         XCTAssertEqual(
             StatusLines.machine(lidClosed: false, watts: nil, wifiSSID: "", batteryPercent: 82, isCharging: true),
-            "Lid: open \u{00B7} 82% charging"
+            "Крышка: открыта \u{00B7} 82% заряжается"
         )
     }
 
     func testActionsLine() {
         XCTAssertNil(StatusLines.actions(frozenCount: 0, dockerPaused: false, lastGap: nil))
-        XCTAssertEqual(StatusLines.actions(frozenCount: 3, dockerPaused: true, lastGap: nil), "3 apps frozen \u{00B7} Docker paused")
-        XCTAssertEqual(StatusLines.actions(frozenCount: 1, dockerPaused: false, lastGap: 12.4), "1 app frozen \u{00B7} last gap 12s")
-        XCTAssertEqual(StatusLines.actions(frozenCount: 0, dockerPaused: true, lastGap: 0), "Docker paused")
+        XCTAssertEqual(StatusLines.actions(frozenCount: 3, dockerPaused: true, lastGap: nil), "заморожено 3 приложения \u{00B7} Docker на паузе")
+        XCTAssertEqual(StatusLines.actions(frozenCount: 1, dockerPaused: false, lastGap: 12.4), "заморожено 1 приложение \u{00B7} последний обрыв 12 с")
+        XCTAssertEqual(StatusLines.actions(frozenCount: 0, dockerPaused: true, lastGap: 0), "Docker на паузе")
     }
 
     func testThrottleWarning() {
         XCTAssertNil(StatusLines.throttleWarning([]))
-        XCTAssertEqual(StatusLines.throttleWarning(["Chrome"]), "\u{26A0} Chrome is throttled")
-        XCTAssertEqual(StatusLines.throttleWarning(["Chrome", "Arc"]), "\u{26A0} Chrome and Arc are throttled")
-        XCTAssertEqual(StatusLines.throttleWarning(["Chrome", "Arc", "Chromium"]), "\u{26A0} Chrome, Arc, and Chromium are throttled")
+        XCTAssertEqual(StatusLines.throttleWarning(["Chrome"]), "\u{26A0} Замедлен: Chrome")
+        XCTAssertEqual(StatusLines.throttleWarning(["Chrome", "Arc"]), "\u{26A0} Замедлены: Chrome и Arc")
+        XCTAssertEqual(StatusLines.throttleWarning(["Chrome", "Arc", "Chromium"]), "\u{26A0} Замедлены: Chrome, Arc и Chromium")
     }
 
     func testMenuListsStatusThenSettingsAndQuit() {
@@ -248,10 +248,10 @@ final class UIStatusTests: XCTestCase {
             error: nil
         )
         XCTAssertEqual(items, [
-            StatusMenu.Item(title: "Sleep held per journal \u{2014} not verified live", kind: .info),
+            StatusMenu.Item(title: "Сон отключён по журналу \u{2014} вживую не проверено", kind: .info),
             StatusMenu.Item(title: "Lid: closed \u{00B7} 82%", kind: .info),
             StatusMenu.Item(title: "3 apps frozen", kind: .info),
-            StatusMenu.Item(title: "\u{26A0} Chrome is throttled", kind: .warning),
+            StatusMenu.Item(title: "\u{26A0} Замедлен: Chrome", kind: .warning),
             StatusMenu.Item(title: "Перезапустить Chrome без замедления", kind: .relaunchBrowser(Self.chrome)),
             StatusMenu.Item(title: "", kind: .separator),
             StatusMenu.Item(title: StatusMenu.settingsTitle, kind: .settings),
@@ -306,7 +306,7 @@ final class UIStatusTests: XCTestCase {
             [.info, .warning, .relaunchBrowser(Self.chrome), .warning, .warning, .separator, .settings, .quit]
         )
         XCTAssertEqual(items[3], StatusMenu.Item(
-            title: "\u{26A0} Hotspot password unreadable by this build: enter it again in Settings",
+            title: "\u{26A0} Эта сборка не может прочитать пароль точки доступа: введите его заново в настройках",
             kind: .warning
         ))
         XCTAssertEqual(
@@ -319,16 +319,16 @@ final class UIStatusTests: XCTestCase {
     /// Settings notice except for a missing item, where the empty field is
     /// the notice.
     func testHotspotPasswordProblemCopy() {
-        XCTAssertEqual(HotspotPasswordProblem.missing.menuLine, "\u{26A0} Hotspot password not saved: enter it in Settings")
+        XCTAssertEqual(HotspotPasswordProblem.missing.menuLine, "\u{26A0} Пароль точки доступа не сохранён: введите его в настройках")
         XCTAssertNil(HotspotPasswordProblem.missing.settingsNotice)
-        XCTAssertTrue(HotspotPasswordProblem.unreadable.settingsNotice?.contains("Enter it again and save") ?? false)
-        XCTAssertTrue(HotspotPasswordProblem.unreadable.explanation.hasSuffix("Enter it again in Settings."))
-        XCTAssertEqual(HotspotPasswordProblem.error("keychain: boom").menuLine, "\u{26A0} Hotspot password unreadable: keychain: boom")
-        XCTAssertEqual(HotspotPasswordProblem.error("keychain: boom").settingsNotice, "The saved password can't be read: keychain: boom")
+        XCTAssertTrue(HotspotPasswordProblem.unreadable.settingsNotice?.contains("Введите пароль заново и сохраните") ?? false)
+        XCTAssertTrue(HotspotPasswordProblem.unreadable.explanation.hasSuffix("Введите пароль заново в настройках."))
+        XCTAssertEqual(HotspotPasswordProblem.error("keychain: boom").menuLine, "\u{26A0} Не удаётся прочитать пароль точки доступа: keychain: boom")
+        XCTAssertEqual(HotspotPasswordProblem.error("keychain: boom").settingsNotice, "Не удаётся прочитать сохранённый пароль: keychain: boom")
         XCTAssertEqual(KeychainError(status: errSecAuthFailed).problem, .unreadable)
         XCTAssertEqual(KeychainError(status: errSecInteractionNotAllowed).problem, .unreadable)
         XCTAssertEqual(KeychainError(status: errSecInvalidOwnerEdit).problem, .unreadable)
-        XCTAssertEqual(KeychainError(status: errSecParam).problem, .error("keychain: One or more parameters passed to a function were not valid."))
+        XCTAssertEqual(KeychainError(status: errSecParam).problem, .error("связка ключей: One or more parameters passed to a function were not valid."))
     }
 
     /// The relaunch item asks first, since the browser is quit and its

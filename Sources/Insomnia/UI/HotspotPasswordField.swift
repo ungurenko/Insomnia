@@ -88,9 +88,9 @@ struct HotspotPasswordField: Equatable {
     /// SSID typed while the save waited, or either field edited since,
     /// reads "Save": that SSID has no password yet.
     func buttonTitle(ssid: String) -> String {
-        if saving { return "Saving\u{2026}" }
+        if saving { return "Сохранение\u{2026}" }
         let showing = stored?.ssid == HotspotSSID.normalized(ssid) && stored?.password == password
-        return showing ? "Saved" : "Save"
+        return showing ? "Сохранено" : "Сохранить"
     }
 
     /// The user changed the password field. A load still waiting will not

@@ -239,7 +239,7 @@ final class WorkspaceBrowserProcesses: BrowserProcessControlling {
         let r = try await Shell.run("/usr/bin/open", ["-b", bundleId, "--args"] + arguments, timeout: 15)
         guard r.succeeded else {
             let stderr = r.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-            throw BrowserProcessError(detail: stderr.isEmpty ? "open exited with status \(r.status)" : stderr)
+            throw BrowserProcessError(detail: stderr.isEmpty ? "команда open завершилась с кодом \(r.status)" : stderr)
         }
     }
 
@@ -307,15 +307,15 @@ enum RelaunchOutcome: Equatable, Sendable {
         case .relaunched, .cancelled:
             nil
         case .notRunning:
-            "\(name) is not running. Nothing was quit or relaunched."
+            "\(name) не запущен. Ничего не закрывалось и не перезапускалось."
         case let .argumentsUnreadable(detail):
-            "Could not read \(name)'s profile arguments (\(detail)), so a relaunch could have opened the wrong profile. \(name) was not quit."
+            "Не удалось прочитать параметры профиля \(name) (\(detail)), поэтому перезапуск мог бы открыть не тот профиль. \(name) не закрывался."
         case .stillRunning:
-            "\(name) did not quit within \(Int(BrowserThrottle.quitTimeout)) s, so nothing was relaunched. It may still quit later. If it does, open it again yourself."
+            "\(name) не закрылся за \(Int(BrowserThrottle.quitTimeout)) с, поэтому перезапуска не было. Он может закрыться позже. Если это случится, откройте его снова сами."
         case let .launchFailed(detail):
-            "\(name) quit but could not be relaunched: \(detail). Open it yourself."
+            "\(name) закрылся, но его не удалось запустить снова: \(detail). Откройте его сами."
         case .didNotStart:
-            "\(name) quit and was asked to open again, but it was not running after \(Int(BrowserThrottle.startTimeout)) s. Open it yourself."
+            "\(name) закрылся, ему было отправлено указание открыться снова, но через \(Int(BrowserThrottle.startTimeout)) с он так и не запустился. Откройте его сами."
         }
     }
 }
@@ -392,14 +392,14 @@ final class BrowserThrottle {
         let extra: [String]
         do {
             guard main.identity != nil else {
-                throw BrowserProcessError(detail: "the start time of pid \(main.pid) could not be read to check them")
+                throw BrowserProcessError(detail: "не удалось прочитать время запуска процесса \(main.pid), чтобы их проверить")
             }
             let args = try await readArgs(main.pid)
             guard !args.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                throw BrowserProcessError(detail: "ps printed nothing for pid \(main.pid)")
+                throw BrowserProcessError(detail: "команда ps ничего не вывела для процесса \(main.pid)")
             }
             guard processes.isRunning(main) else {
-                throw BrowserProcessError(detail: "pid \(main.pid) exited while they were read, or could not be checked")
+                throw BrowserProcessError(detail: "процесс \(main.pid) завершился, пока их читали, или его не удалось проверить")
             }
             extra = ChromiumFlags.preservedArgs(args: args)
         } catch {

@@ -127,7 +127,7 @@ final class NetworkFailoverCancellationTests: XCTestCase {
 
         XCTAssertEqual(log.sent, ["first"], "a pane was nudged after the session ended")
         // The user is still told about the keystroke that did go out...
-        XCTAssertEqual(notifier.posts.map(\.body), ["Network was down 1m 40s. Nudged 1 tmux pane. Check GUI agents."])
+        XCTAssertEqual(notifier.posts.map(\.body), ["Сети не было 1 мин 40 с. Подтолкнуто: 1 панель tmux. Проверьте приложения-агенты с окнами."])
         // ...but the stopped driver must not report a gap into the next session's status.
         XCTAssertEqual(gaps.value, [])
     }

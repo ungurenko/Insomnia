@@ -107,8 +107,8 @@ final class SessionManager {
     /// Shown in Settings next to the darken toggle.
     var darkenRefusals: [String] {
         [
-            display.refusal().map { "Display: \($0).\(Self.keptLevelNote(state.savedDisplayBrightness))" },
-            keyboard.refusal().map { "Keyboard backlight: \($0).\(Self.keptLevelNote(state.savedKeyboardBrightness))" },
+            display.refusal().map { "Экран: \($0).\(Self.keptLevelNote(state.savedDisplayBrightness))" },
+            keyboard.refusal().map { "Подсветка клавиатуры: \($0).\(Self.keptLevelNote(state.savedKeyboardBrightness))" },
         ].compactMap { $0 }
     }
 
@@ -116,7 +116,7 @@ final class SessionManager {
     /// value saved for it was kept after a refused restore.
     private static func keptLevelNote(_ saved: Float?) -> String {
         guard let saved else { return "" }
-        return " The level saved before the lid closed, \(saved), was not restored; set it with the brightness keys or Control Center."
+        return " Уровень, сохранённый перед закрытием крышки (\(saved)), не восстановлен. Выставьте его клавишами яркости или в Пункте управления."
     }
     /// Last failure worth showing in the menu; cleared on the next success.
     private(set) var lastError: String?
@@ -708,14 +708,14 @@ final class SessionManager {
                 case nil:
                     break
                 }
-                self.warnAboutCommand("\(what) skipped, nothing changed: \(stuck.description) is still running and holds the recovery lock until it exits (sudo kill \(stuck.pid) to stop it by hand)")
+                self.warnAboutCommand("\(Self.label(what)): пропущено, ничего не изменено. \(stuck.description) всё ещё работает и держит блокировку восстановления, пока не завершится (остановить вручную: sudo kill \(stuck.pid))")
                 return .failure(.commandRunning(pid: stuck.pid))
             }
             let handle: RecoveryLockHandle
             do {
                 handle = try await self.recoveryLock.acquire(timeout: self.recoveryLockTimeout)
             } catch {
-                let line = "\(what) skipped, nothing changed: \(error.localizedDescription)\(self.recordedLockHolder(error))"
+                let line = "\(Self.label(what)): пропущено, ничего не изменено. \(error.localizedDescription)\(self.recordedLockHolder(error))"
                 self.fail(line)
                 return .failure(.lockBusy(line))
             }
@@ -775,7 +775,7 @@ final class SessionManager {
     /// Returns the line put in the menu.
     private func refuseForUnreadableJournal(_ what: String, _ error: Error) -> String {
         let message = Self.unreadableJournalMessage(error)
-        let line = "\(what) refused, nothing changed: \(message)"
+        let line = "\(Self.label(what)): отказ, ничего не изменено. \(message)"
         fail(line)
         let detail = error.localizedDescription
         if announcedCorruption != detail {
@@ -786,7 +786,7 @@ final class SessionManager {
     }
 
     private static func unreadableJournalMessage(_ error: Error) -> String {
-        "\(error.localizedDescription). Insomnia has changed nothing and will not start, extend or end sessions until the file is fixed or moved by hand; it is the only record of what a previous run changed."
+        "\(error.localizedDescription). Insomnia ничего не изменила и не будет запускать, продлевать или завершать сессии, пока файл не исправлен или не перемещён вручную: это единственная запись о том, что изменил предыдущий запуск."
     }
 
     /// Keep `handle` until `command` exits, then release it and settle what
@@ -857,18 +857,18 @@ final class SessionManager {
                 if state.lowPowerSetByUs { lowPowerWasOurs = true }
                 owedEdits.lowPowerOff = true
                 displayWriteAfterUnreadOff = owed
-                failUncleared("\(command.description) exited 0, but the journal could not be read to clear its entry: \(error.localizedDescription); low power mode is off, and the clear and the display write owed after it (\(owed)) wait for the journal to read again", clear)
+                failUncleared("\(command.description) завершилась с кодом 0, но журнал не удалось прочитать, чтобы убрать её запись: \(error.localizedDescription). Режим энергосбережения выключен, а очистка записи и возврат яркости экрана после него (\(owed)) ждут, пока журнал снова станет читаемым", clear)
                 return
             }
-            failUncleared("\(command.description) exited 0, but the journal could not be read to clear its entry: \(error.localizedDescription); it will be retried", clear)
+            failUncleared("\(command.description) завершилась с кодом 0, но журнал не удалось прочитать, чтобы убрать её запись: \(error.localizedDescription). Попытка повторится", clear)
             return
         }
         switch undo {
         case .sleepRestored:
-            guard clearUndone("sleep restored (\(command.description) exited 0)", clear) else { return }
+            guard clearUndone("сон возвращён (\(command.description) завершилась с кодом 0)", clear) else { return }
             Log.info("sleep restored: \(command.description) exited 0")
         case .lowPowerOff:
-            clearLowPowerOwnership("low power mode switched off (\(command.description) exited 0)")
+            clearLowPowerOwnership("режим энергосбережения выключен (\(command.description) завершилась с кодом 0)")
             Log.info("low power mode off: \(command.description) exited 0")
             settleDisplayAfterLowPower()
         }
@@ -886,7 +886,7 @@ final class SessionManager {
             try journal(mutate)
             return true
         } catch {
-            failUncleared("\(what) but the journal entry could not be cleared: \(error.localizedDescription); it will be retried", mutate)
+            failUncleared("\(what), но запись в журнале не удалось убрать: \(error.localizedDescription). Попытка повторится", mutate)
             return false
         }
     }
@@ -962,22 +962,22 @@ final class SessionManager {
     /// the lock and removes it (`exclusive`). Announced once per command.
     private func recordedLockHolder(_ error: Error) -> String {
         guard case .busy? = error as? RecoveryLockError, let record = store.loadUnfinishedCommand() else { return "" }
-        let command = "`\(record.command)`, left running by Insomnia since \(iso(record.since)),"
+        let command = "`\(record.command)`, оставленная работать Insomnia с \(iso(record.since)),"
         switch (record.identity, processLookup(record.pid)) {
         case let (recorded?, .present(live)) where live.identity == recorded:
-            let line = "\(command) still runs as pid \(record.pid) and holds it; stop it by hand with sudo kill \(record.pid)"
+            let line = "\(command) всё ещё работает как процесс \(record.pid) и держит блокировку; остановите её вручную командой sudo kill \(record.pid)"
             if announcedLockHolder != record.pid {
                 announcedLockHolder = record.pid
                 notifier.post(
                     title: Self.commandRunningTitle,
-                    body: "The recovery lock is busy: \(line). Insomnia changes nothing until the lock is free."
+                    body: "Блокировка восстановления занята: \(line). Insomnia ничего не меняет, пока блокировка не освободится."
                 )
             }
             return "; \(line)"
         case (_?, .absent), (_?, .present):
-            return "; \(command) has exited since, so another process holds it"
+            return "; \(command) с тех пор завершилась, значит, блокировку держит другой процесс"
         case (nil, _), (_?, .unreadable):
-            return "; \(command) may still hold it, but Insomnia cannot confirm that pid \(record.pid) is still that command, so it names no process to stop"
+            return "; \(command) возможно, всё ещё держит блокировку, но Insomnia не может подтвердить, что процесс \(record.pid) по-прежнему эта команда, поэтому не называет процесс для остановки"
         }
     }
 
@@ -1100,7 +1100,7 @@ final class SessionManager {
             Log.error("low power mode reads off after the power command, but lowpowermode 0 failed; ownership kept in the journal and checked again in \(Int(recoveryRetryDelay)) s: \(error.localizedDescription)")
             return false
         }
-        let cleared = clearLowPowerOwnership("low power mode confirmed off after the power command")
+        let cleared = clearLowPowerOwnership("режим энергосбережения подтверждён выключенным после команды питания")
         if cleared {
             Log.info("low power mode confirmed off after the power command; ownership cleared from the journal")
         }
@@ -1134,10 +1134,10 @@ final class SessionManager {
         } catch {
             Log.error("could not record the command left running in \(paths.unfinishedCommandFile.path): \(error.localizedDescription)")
         }
-        warnAboutCommand("\(error.localizedDescription); Insomnia holds the recovery lock and will not quit until it exits (sudo kill \(error.command.pid) to stop it by hand)")
+        warnAboutCommand("\(error.localizedDescription). Insomnia держит блокировку восстановления и не закроется, пока команда не завершится (остановить вручную: sudo kill \(error.command.pid))")
         notifier.post(
             title: Self.commandRunningTitle,
-            body: "\(error.command.description) did not stop on SIGTERM and is left running, because killing it could leave a root pmset changing power settings outside the transaction. Nothing else was changed and the journal keeps its entries. Insomnia holds the recovery lock until it exits and will not quit or start a session before then. To stop it by hand: sudo kill \(error.command.pid)."
+            body: "\(error.command.description) не остановилась по сигналу SIGTERM и осталась работать: принудительное завершение могло бы оставить pmset с правами администратора менять настройки питания вне операции. Больше ничего не изменено, записи в журнале сохранены. Insomnia держит блокировку восстановления, пока команда не завершится, и до тех пор не закроется и не начнёт сессию. Остановить вручную: sudo kill \(error.command.pid)."
         )
         if let reason {
             pendingEnd = reason
@@ -1172,7 +1172,7 @@ final class SessionManager {
             return
         }
         guard pendingEnd == nil else {
-            fail("start refused: the previous session is still being ended; retrying shortly")
+            fail("Запуск отклонён: предыдущая сессия ещё завершается. Повтор через несколько секунд")
             return
         }
         let ticket = endTicket
@@ -1205,7 +1205,7 @@ final class SessionManager {
             // appeared or lost its permissions after reconcile, or reconcile
             // could not move it aside. It may be a valid session, and a
             // rollback could not put it back.
-            fail("start refused, nothing changed: session.json could not be read (\(error.localizedDescription)). Remove it or move it out of \(paths.appSupport.path), then start again")
+            fail("Запуск отклонён, ничего не изменено: файл session.json не удалось прочитать (\(error.localizedDescription)). Удалите его или переместите из \(paths.appSupport.path) и запустите снова")
             return
         }
 
@@ -1214,7 +1214,7 @@ final class SessionManager {
             keptSessionFile = nil
             try journal { $0.sleepDisabledByUs = true }
         } catch {
-            fail("could not write session: \(error.localizedDescription)")
+            fail("Не удалось записать сессию: \(error.localizedDescription)")
             rollBackStart(journal: journalBefore, session: sessionBefore)
             return
         }
@@ -1225,7 +1225,7 @@ final class SessionManager {
             try await backstop.arm()
         } catch {
             rollBackStart(journal: journalBefore, session: sessionBefore)
-            fail("could not arm backstop: \(error.localizedDescription)")
+            fail("Не удалось включить агент восстановления: \(error.localizedDescription)")
             return
         }
         guard endTicket == ticket else {
@@ -1244,7 +1244,7 @@ final class SessionManager {
             stopTransaction(for: still, thenEnd: .startFailed)
             return
         } catch {
-            fail("could not disable sleep: \(error.localizedDescription)")
+            fail("Не удалось отключить сон: \(error.localizedDescription)")
             _ = await performEnd(reason: .startFailed)
             return
         }
@@ -1282,7 +1282,7 @@ final class SessionManager {
         do {
             try await backstop.arm()
         } catch {
-            fail("could not confirm backstop: \(error.localizedDescription)")
+            fail("Не удалось подтвердить работу агента восстановления: \(error.localizedDescription)")
             return
         }
         guard endTicket == ticket, session == current else {
@@ -1292,7 +1292,7 @@ final class SessionManager {
         do {
             try store.saveSession(updated)
         } catch {
-            fail("could not write session: \(error.localizedDescription)")
+            fail("Не удалось записать сессию: \(error.localizedDescription)")
             return
         }
         session = updated
@@ -1328,7 +1328,7 @@ final class SessionManager {
         case .locked:
             notifier.post(
                 title: Self.notEndedTitle,
-                body: "The recovery lock is held by another process, so nothing was changed. The session is still active; Insomnia retries in \(Int(recoveryRetryDelay)) s."
+                body: "Блокировку восстановления держит другой процесс, поэтому ничего не изменено. Сессия всё ещё идёт; Insomnia повторит попытку через \(Int(recoveryRetryDelay)) с."
             )
             scheduleEndRetry(reason)
         case .incomplete(agentArmed: false), .sessionRetained:
@@ -1377,8 +1377,8 @@ final class SessionManager {
             do {
                 try store.deleteSession()
             } catch {
-                retainedBecause = "session.json could not be removed (\(error.localizedDescription)); a relaunch would hold sleep again for it."
-                fail("could not remove session.json: \(error.localizedDescription)")
+                retainedBecause = "Файл session.json не удалось удалить (\(error.localizedDescription)); при перезапуске он снова отключил бы сон."
+                fail("Не удалось удалить session.json: \(error.localizedDescription)")
             }
         }
         let stuck = await restoreAll()
@@ -1422,16 +1422,16 @@ final class SessionManager {
                     try await backstop.arm()
                 } catch {
                     armed = false
-                    fail("recovery agent could not be confirmed: \(error.localizedDescription)")
+                    fail("Не удалось подтвердить работу агента восстановления: \(error.localizedDescription)")
                 }
             }
             if let retainedBecause {
                 // The agent enforces deadlines, it does not remove a live
                 // session file; only this process can, so it stays to retry.
-                let journalNote = dirty ? " Some changes are also still journaled." : ""
+                let journalNote = dirty ? " Часть изменений тоже ещё записана в журнале." : ""
                 notifier.post(
                     title: Self.incompleteTitle,
-                    body: "\(retainedBecause)\(journalNote) Insomnia retries in \(Int(recoveryRetryDelay)) s; do not quit until it is gone."
+                    body: "\(retainedBecause)\(journalNote) Insomnia повторит попытку через \(Int(recoveryRetryDelay)) с; не закрывайте её, пока проблема не исчезнет."
                 )
                 scheduleEndRetry(reason)
                 return .sessionRetained
@@ -1450,10 +1450,10 @@ final class SessionManager {
                 Log.info("end: the journal has not taken the clear of a brightness kept after a refused restore and settled in this process; a relaunch would read that entry again and could write its saved value over a 0 set since, so Insomnia keeps it and retries")
             }
             let agentCanFinish = armed && !owedEdits.hidesARestore && owedReadLit == nil && !owedSettlement
-            let unrecorded = [owedSettlement ? "that a brightness kept after a refused restore is settled" : nil,
-                              owedReadLit != nil ? "a reading of the display brightness kept after a refused restore" : nil]
-            let detail = dirty ? (lastError ?? "some changes could not be undone")
-                : "state.json could not record \(unrecorded.compactMap { $0 }.joined(separator: ", nor "))"
+            let unrecorded = [owedSettlement ? "сохранённая после отказа яркость улажена" : nil,
+                              owedReadLit != nil ? "показание яркости экрана, сохранённой после отказа" : nil]
+            let detail = dirty ? (lastError ?? "часть изменений не удалось отменить")
+                : "файл state.json не смог записать: \(unrecorded.compactMap { $0 }.joined(separator: "; "))"
             let retry: String
             if agentCanFinish {
                 // The agent keeps saved output volumes, display brightness
@@ -1467,14 +1467,14 @@ final class SessionManager {
                 let journaled = effectiveState
                 let owesBrightness = journaled.savedDisplayBrightness != nil || journaled.savedKeyboardBrightness != nil
                 var sentences: [String] = []
-                if state.isDirtyApartFromAppOnlyEntries { sentences.append("The recovery agent retries every minute.") }
+                if state.isDirtyApartFromAppOnlyEntries { sentences.append("Агент восстановления повторяет попытку каждую минуту.") }
                 if owesAudio { sentences.append(Self.audioRetrySentence(recoveryRetryDelay)) }
                 if owesBrightness { sentences.append(Self.brightnessRetrySentence) }
                 retry = sentences.joined(separator: " ")
             } else if owedReadLit != nil || owedSettlement {
-                retry = "Insomnia retries in \(Int(recoveryRetryDelay)) s; do not quit until state.json can be written."
+                retry = "Insomnia повторит попытку через \(Int(recoveryRetryDelay)) с; не закрывайте её, пока state.json нельзя будет записать."
             } else {
-                retry = "Insomnia retries in \(Int(recoveryRetryDelay)) s; do not quit until it is restored."
+                retry = "Insomnia повторит попытку через \(Int(recoveryRetryDelay)) с; не закрывайте её, пока всё не восстановится."
             }
             notifier.post(title: Self.incompleteTitle, body: "\(detail). \(retry)")
             // Reconcile and a failed start reach here without `end()`; the
@@ -1615,10 +1615,10 @@ final class SessionManager {
                 stopTransaction(for: still, thenEnd: nil)
                 return false
             } catch {
-                fail("could not enable low power mode: \(error.localizedDescription)")
+                fail("Не удалось включить режим энергосбережения: \(error.localizedDescription)")
                 do {
                     try await sleepGuard.setLowPowerMode(false)
-                    clearLowPowerOwnership("low power mode switched off after the failed enable")
+                    clearLowPowerOwnership("режим энергосбережения выключен после неудачного включения")
                 } catch let still as CommandStillRunningError {
                     // The rollback itself is left running, and the lock
                     // stays with it. Ownership stays journaled until it has
@@ -1626,7 +1626,7 @@ final class SessionManager {
                     // (`performLowPowerCheck`).
                     stopTransaction(for: still, thenEnd: nil, undoes: .lowPowerOff)
                 } catch {
-                    fail("low power mode may be on and could not be switched off: \(error.localizedDescription); kept in the journal to retry")
+                    fail("Режим энергосбережения мог остаться включённым, и выключить его не удалось: \(error.localizedDescription). Запись осталась в журнале для повторной попытки")
                     do { try await backstop.arm() } catch { Log.error("recovery agent could not be confirmed: \(error.localizedDescription)") }
                 }
                 return false
@@ -1645,7 +1645,7 @@ final class SessionManager {
             dropDisplayWriteIfMoved()
             do {
                 try await sleepGuard.setLowPowerMode(false)
-                clearLowPowerOwnership("low power mode switched off")
+                clearLowPowerOwnership("режим энергосбережения выключен")
                 Log.info("low power mode off")
                 settleDisplayAfterLowPower()
                 return true
@@ -1715,13 +1715,13 @@ final class SessionManager {
         if state.sleepDisabledByUs {
             do {
                 try await sleepGuard.setSleepDisabled(false)
-                clearUndone("sleep restored") { $0.sleepDisabledByUs = false }
+                clearUndone("сон возвращён") { $0.sleepDisabledByUs = false }
                 Log.info("sleep restored")
             } catch let still as CommandStillRunningError {
                 stopTransaction(for: still, thenEnd: nil, undoes: .sleepRestored)
                 return still.command
             } catch {
-                fail("could not restore sleep: \(error.localizedDescription)")
+                fail("Не удалось вернуть сон: \(error.localizedDescription)")
             }
         }
 
@@ -1731,14 +1731,14 @@ final class SessionManager {
             dropDisplayWriteIfMoved()
             do {
                 try await sleepGuard.setLowPowerMode(false)
-                clearLowPowerOwnership("low power mode cleared")
+                clearLowPowerOwnership("режим энергосбережения сброшен")
                 Log.info("low power mode cleared")
                 lowPowerJustCleared = true
             } catch let still as CommandStillRunningError {
                 stopTransaction(for: still, thenEnd: nil, undoes: .lowPowerOff)
                 return still.command
             } catch {
-                fail("could not clear low power mode: \(error.localizedDescription)")
+                fail("Не удалось сбросить режим энергосбережения: \(error.localizedDescription)")
             }
         } else if effectiveState.displayRestoredUnderLowPower != nil {
             dropDisplayWrite(reason: "the mode was cleared by someone else")
@@ -1790,7 +1790,7 @@ final class SessionManager {
                 do {
                     try journal { $0.appNapOverrides.append(AppNapOverride(bundleId: id, previous: previous)) }
                 } catch {
-                    fail("could not journal the App Nap setting of \(id): \(error.localizedDescription); its preferences are left unchanged")
+                    fail("Не удалось записать в журнал настройку App Nap для \(id): \(error.localizedDescription). Настройки приложения не изменены")
                     break
                 }
             }
@@ -1800,7 +1800,7 @@ final class SessionManager {
             } catch {
                 // Already journaled: the restore puts the recorded value
                 // back whether or not this write landed.
-                fail("app nap: \(error.localizedDescription); kept in the journal to restore")
+                fail("App Nap: \(error.localizedDescription). Запись осталась в журнале для восстановления")
             }
         }
         if written > 0 || alreadyOff > 0 {
@@ -1822,10 +1822,10 @@ final class SessionManager {
                 do {
                     try journal { $0.appNapOverrides.removeAll { $0.bundleId == entry.bundleId } }
                 } catch {
-                    fail("App Nap restored for \(entry.bundleId) but the journal entry could not be cleared: \(error.localizedDescription); it will be retried")
+                    fail("App Nap для \(entry.bundleId) восстановлен, но запись в журнале не удалось убрать: \(error.localizedDescription). Попытка повторится")
                 }
             } catch {
-                fail("could not restore App Nap for \(entry.bundleId): \(error.localizedDescription); kept in the journal to retry")
+                fail("Не удалось восстановить App Nap для \(entry.bundleId): \(error.localizedDescription). Запись осталась в журнале для повторной попытки")
             }
         }
         Log.info("app nap restored for \(restored) app(s)")
@@ -1868,12 +1868,12 @@ final class SessionManager {
                 }
                 continue
             } catch {
-                failAudio("could not restore audio on \(device): \(error.localizedDescription); kept in the journal to retry")
+                failAudio("Не удалось восстановить звук на устройстве \(device): \(error.localizedDescription). Запись осталась в журнале для повторной попытки")
                 retry = true
                 continue
             }
             let uid = entry.deviceUID
-            if !clearUndone("audio restored on \(device)", { $0.savedAudioOutputs.removeAll { $0.deviceUID == uid } }) {
+            if !clearUndone("звук на устройстве \(device) восстановлен", { $0.savedAudioOutputs.removeAll { $0.deviceUID == uid } }) {
                 retry = true
             }
         }
@@ -1893,13 +1893,13 @@ final class SessionManager {
                 let m = muted ?? false
                 try audio.apply(volume: v, muted: m, deviceUID: nil)
                 Log.info("audio restored on the default output (volume \(v), muted \(m))")
-                let cleared = clearUndone("audio restored") { s in
+                let cleared = clearUndone("звук восстановлен") { s in
                     s.savedOutputVolume = nil
                     s.savedMuted = nil
                 }
                 if !cleared { retry = true }
             } catch {
-                failAudio("could not restore audio: \(error.localizedDescription)")
+                failAudio("Не удалось восстановить звук: \(error.localizedDescription)")
                 retry = true
             }
         }
@@ -2040,7 +2040,7 @@ final class SessionManager {
             } catch is AudioDeviceMissingError {
                 // Still not connected: the request stands.
             } catch {
-                self.fail("could not check whether \(entry.label) is connected: \(error.localizedDescription); its saved volume stays")
+                self.fail("Не удалось проверить, подключено ли устройство \(entry.label): \(error.localizedDescription). Сохранённая громкость остаётся")
                 return
             }
             do {
@@ -2048,7 +2048,7 @@ final class SessionManager {
                 self.audioDevicesNotConnected.remove(deviceUID)
                 Log.info("audio: stopped waiting for \(entry.label) as asked; its saved volume \(entry.volume) and mute \(entry.muted) are dropped, and it stays muted")
             } catch {
-                self.fail("could not drop the saved volume of \(entry.label): \(error.localizedDescription)")
+                self.fail("Не удалось удалить сохранённую громкость устройства \(entry.label): \(error.localizedDescription)")
             }
         }
     }
@@ -2066,24 +2066,24 @@ final class SessionManager {
             // Only entries that still need a retry, or that a person has to
             // look at, stay journaled. Gone and resumed entries are done.
             let keep = Set(report.failed + report.unverifiable + report.unobserved)
-            clearUndone("frozen processes resumed") { s in
+            clearUndone("замороженные процессы возобновлены") { s in
                 s.frozenProcesses.removeAll { !keep.contains($0.pid) }
                 // Docker Desktop is frozen via its pids too; the flag is only a marker.
                 if s.frozenProcesses.isEmpty { s.dockerFrozen = false }
             }
             Log.info("resumed \(report.resumed.count) frozen pid(s); \(report.gone.count) gone, \(report.failed.count) failed, \(report.unverifiable.count) unverifiable, \(report.unobserved.count) unobserved")
             if !report.failed.isEmpty {
-                errors.append("could not resume pid(s) \(report.failed.map(String.init).joined(separator: ", ")); kept in the journal to retry")
+                errors.append("не удалось возобновить процессы \(report.failed.map(String.init).joined(separator: ", ")); записи остались в журнале для повторной попытки")
             }
             if !report.unobserved.isEmpty {
-                errors.append("could not read the state of pid(s) \(report.unobserved.map(String.init).joined(separator: ", ")); kept in the journal to retry")
+                errors.append("не удалось прочитать состояние процессов \(report.unobserved.map(String.init).joined(separator: ", ")); записи остались в журнале для повторной попытки")
             }
             if !report.unverifiable.isEmpty {
                 let list = report.unverifiable.map(String.init).joined(separator: ", ")
-                errors.append("pid(s) \(list) are stopped but journaled without identity, so Insomnia cannot prove it froze them and will not resume them. Either an older build recorded the pid alone, or a freeze stopped the pid and Insomnia quit, crashed or failed to write before the stop was confirmed in the journal. Check each one first, for example `ps -o pid,stat,lstart,command -p <pid>`, and only if it is a process you expected Insomnia to freeze run `kill -CONT <pid>`; the entry stays in the journal until resumed or gone")
+                errors.append("процессы \(list) остановлены, но записаны в журнал без признаков идентификации, поэтому Insomnia не может доказать, что заморозила их сама, и не будет их возобновлять. Либо старая версия записала только номер процесса, либо заморозка остановила процесс, а Insomnia закрылась, упала или не успела записать это в журнал до подтверждения остановки. Сначала проверьте каждый, например командой `ps -o pid,stat,lstart,command -p <pid>`, и только если это процесс, который Insomnia должна была заморозить, выполните `kill -CONT <pid>`; запись остаётся в журнале, пока процесс не возобновлён или не исчезнет")
             }
         } else if state.dockerFrozen {
-            clearUndone("Docker Desktop has no frozen process left") { $0.dockerFrozen = false }
+            clearUndone("у Docker Desktop не осталось замороженных процессов") { $0.dockerFrozen = false }
         }
 
         if !state.savedAudioOutputs.isEmpty || state.savedOutputVolume != nil || state.savedMuted != nil {
@@ -2117,19 +2117,19 @@ final class SessionManager {
         var refused: [String] = []
         var waiting: [String] = []
         if let saved = kept.savedDisplayBrightness, let why = display.refusal() {
-            refused.append(keepRefusedRestore("Display brightness", saved: saved, why: why, flag: \.displayRestoreRefused))
+            refused.append(keepRefusedRestore("Яркость экрана", saved: saved, why: why, flag: \.displayRestoreRefused))
         } else if let saved = kept.savedDisplayBrightness {
             restoredDisplay = restoreDisplay(saved: saved, waiting: &waiting, errors: &errors)
         }
         if let saved = kept.savedKeyboardBrightness, let why = keyboard.refusal() {
-            refused.append(keepRefusedRestore("Keyboard backlight", saved: saved, why: why, flag: \.keyboardRestoreRefused))
+            refused.append(keepRefusedRestore("Подсветка клавиатуры", saved: saved, why: why, flag: \.keyboardRestoreRefused))
         } else if let saved = kept.savedKeyboardBrightness {
             restoredKeyboard = restoreKeyboard(saved: saved, waiting: &waiting, errors: &errors)
         }
         waiting += owedEdits.clearsWaiting
         if !refused.isEmpty {
             let one = refused.count == 1
-            errors.append("could not restore the brightness saved before the lid closed on this macOS build. \(refused.joined(separator: " ")) Set \(one ? "the level" : "the levels") with the brightness keys or Control Center; the saved \(one ? "value stays" : "values stay") in the journal for a version that can restore \(one ? "it" : "them")")
+            errors.append("не удалось восстановить яркость, сохранённую перед закрытием крышки, в этой версии macOS. \(refused.joined(separator: " ")) Выставьте \(one ? "уровень" : "уровни") клавишами яркости или в Пункте управления; \(one ? "сохранённое значение останется" : "сохранённые значения останутся") в журнале для версии, которая сможет \(one ? "его" : "их") восстановить")
         }
         if !errors.isEmpty {
             fail(([shownAbove].compactMap { $0 } + errors).joined(separator: ". "))
@@ -2200,7 +2200,7 @@ final class SessionManager {
         do {
             try display.setBrightness(saved)
         } catch {
-            errors.append("could not restore display brightness: \(error.localizedDescription)")
+            errors.append("не удалось восстановить яркость экрана: \(error.localizedDescription)")
             makeRetryable("display brightness", saved: saved, flag: \.displayRestoreRefused, owed: \.display, errors: &errors)
             return nil
         }
@@ -2218,7 +2218,7 @@ final class SessionManager {
         do {
             try journal(clear)
         } catch {
-            errors.append(unclearedLine("display brightness restored but the journal entry could not be cleared: \(error.localizedDescription); it will be retried", clear))
+            errors.append(unclearedLine("яркость экрана восстановлена, но запись в журнале не удалось убрать: \(error.localizedDescription). Попытка повторится", clear))
             settleRestored(saved, underLowPower: underLowPower, flag: \.displayRestoreRefused, owed: \.display)
         }
         return saved
@@ -2246,7 +2246,7 @@ final class SessionManager {
         do {
             try keyboard.setBrightness(saved)
         } catch {
-            errors.append("could not restore keyboard backlight: \(error.localizedDescription)")
+            errors.append("не удалось восстановить подсветку клавиатуры: \(error.localizedDescription)")
             makeRetryable("keyboard backlight", saved: saved, flag: \.keyboardRestoreRefused, owed: \.keyboard, errors: &errors)
             return nil
         }
@@ -2259,7 +2259,7 @@ final class SessionManager {
         do {
             try journal(clear)
         } catch {
-            errors.append(unclearedLine("keyboard backlight restored but the journal entry could not be cleared: \(error.localizedDescription); it will be retried", clear))
+            errors.append(unclearedLine("подсветка клавиатуры восстановлена, но запись в журнале не удалось убрать: \(error.localizedDescription). Попытка повторится", clear))
             settleRestored(saved, flag: \.keyboardRestoreRefused, owed: \.keyboard)
         }
         return saved
@@ -2618,7 +2618,7 @@ final class SessionManager {
             do {
                 try await backstop.arm()
             } catch {
-                fail("could not arm recovery agent for the session on disk: \(error.localizedDescription); ending it")
+                fail("Не удалось включить агент восстановления для сессии на диске: \(error.localizedDescription). Сессия завершается")
                 _ = await performEnd(reason: .recoveryUnavailable)
                 return
             }
@@ -2626,7 +2626,7 @@ final class SessionManager {
                 do {
                     try journal { $0.sleepDisabledByUs = true }
                 } catch {
-                    fail("could not journal sleep guard: \(error.localizedDescription); ending session")
+                    fail("Не удалось записать в журнал защиту от сна: \(error.localizedDescription). Сессия завершается")
                     _ = await performEnd(reason: .recoveryUnavailable)
                     return
                 }
@@ -2641,7 +2641,7 @@ final class SessionManager {
                 stopTransaction(for: still, thenEnd: .recoveryUnavailable)
                 return
             } catch {
-                fail("could not re-apply sleep guard: \(error.localizedDescription); ending session")
+                fail("Не удалось заново включить защиту от сна: \(error.localizedDescription). Сессия завершается")
                 _ = await performEnd(reason: .recoveryUnavailable)
                 return
             }
@@ -2745,17 +2745,17 @@ final class SessionManager {
             Log.error("session.json unreadable (\(detail)); moved to \(moved.path) and treated as no session")
             notifier.post(
                 title: Self.sessionFileTitle,
-                body: "session.json is not a valid session file (\(detail)). It was moved to \(moved.path); Insomnia treats it as no session."
+                body: "session.json не является корректным файлом сессии (\(detail)). Он перемещён в \(moved.path); Insomnia считает, что сессии нет."
             )
         } catch let moveError {
             // Kept, not deleted. A start is refused while it is there, and
             // every end restores the journal, tries the rename again, and
             // stays unfinished while it fails.
             keptSessionFile = .notASession
-            fail("session.json unreadable (\(detail)) and could not be moved aside: \(moveError.localizedDescription); left in place and treated as no session")
+            fail("session.json не читается (\(detail)) и его не удалось убрать: \(moveError.localizedDescription). Файл оставлен на месте, сессии считается нет")
             notifier.post(
                 title: Self.sessionFileTitle,
-                body: "session.json is not a valid session file (\(detail)). It could not be moved aside (\(moveError.localizedDescription)) and was left in place; Insomnia treats it as no session. Insomnia retries the rename and will not quit until it is gone. Remove it or move it out of \(paths.appSupport.path)."
+                body: "session.json не является корректным файлом сессии (\(detail)). Его не удалось убрать (\(moveError.localizedDescription)), он оставлен на месте; Insomnia считает, что сессии нет. Insomnia повторит переименование и не закроется, пока файл не исчезнет. Удалите его или переместите из \(paths.appSupport.path)."
             )
         }
     }
@@ -2764,20 +2764,20 @@ final class SessionManager {
     /// opened; a FIFO or a file without read permission moves the same way.
     /// The restore of a dirty journal reports its own outcome.
     private func moveAsideSessionThatCannotBeRead(_ detail: String) {
-        let expired = "session.json could not be read (\(detail)), so its end time is unknown. Insomnia treats the session as expired and undoes what its journal recorded."
+        let expired = "session.json не удалось прочитать (\(detail)), поэтому время окончания неизвестно. Insomnia считает сессию истёкшей и отменяет то, что записано в журнале."
         do {
             let moved = try store.moveAsideUnreadableSession(now: clock())
             Log.error("session.json could not be read (\(detail)); treated as expired and moved, unopened, to \(moved.path)")
-            notifier.post(title: Self.sessionFileTitle, body: "\(expired) The file was moved, unopened, to \(moved.path).")
+            notifier.post(title: Self.sessionFileTitle, body: "\(expired) Файл перемещён в \(moved.path) без открытия.")
         } catch let moveError {
             // Kept, not deleted. A start is refused while it is there, and
             // every end restores the journal, tries the rename again, and
             // stays unfinished while it fails.
             keptSessionFile = .cannotBeRead
-            fail("session.json could not be read (\(detail)) and could not be moved aside: \(moveError.localizedDescription); treated as expired and left in place")
+            fail("session.json не удалось прочитать (\(detail)); его не удалось убрать: \(moveError.localizedDescription). Сессия считается истёкшей, файл оставлен на месте")
             notifier.post(
                 title: Self.sessionFileTitle,
-                body: "\(expired) The file could not be moved aside (\(moveError.localizedDescription)) and was left in place. If it became readable there, a relaunch would resume it, so Insomnia retries the rename and will not quit until it is gone. Remove it or move it out of \(paths.appSupport.path)."
+                body: "\(expired) Файл не удалось убрать (\(moveError.localizedDescription)), он оставлен на месте. Если он станет читаемым, при перезапуске сессия возобновилась бы, поэтому Insomnia повторит переименование и не закроется, пока файл не исчезнет. Удалите его или переместите из \(paths.appSupport.path)."
             )
         }
     }
@@ -2799,20 +2799,20 @@ final class SessionManager {
             switch kept {
             case .cannotBeRead:
                 Log.info("session.json that could not be read moved, unopened, to \(moved.path)")
-                notifier.post(title: Self.sessionFileTitle, body: "session.json, which could not be read, was moved, unopened, to \(moved.path).")
+                notifier.post(title: Self.sessionFileTitle, body: "session.json, который не удалось прочитать, перемещён в \(moved.path) без открытия.")
             case .notASession:
                 Log.info("session.json that is not a session moved to \(moved.path)")
-                notifier.post(title: Self.sessionFileTitle, body: "session.json, which is not a valid session file, was moved to \(moved.path).")
+                notifier.post(title: Self.sessionFileTitle, body: "session.json, не являющийся корректным файлом сессии, перемещён в \(moved.path).")
             }
             return nil
         } catch {
             switch kept {
             case .cannotBeRead:
-                fail("session.json could not be read and still could not be moved aside: \(error.localizedDescription)")
-                return "session.json could not be read or moved aside (\(error.localizedDescription)). If it became readable where it is, a relaunch would resume it and hold sleep again. Remove it or move it out of \(paths.appSupport.path)."
+                fail("session.json не удалось прочитать, и убрать его всё ещё не получается: \(error.localizedDescription)")
+                return "session.json не удалось ни прочитать, ни убрать (\(error.localizedDescription)). Если он станет читаемым на месте, при перезапуске сессия возобновилась бы и снова отключила сон. Удалите его или переместите из \(paths.appSupport.path)."
             case .notASession:
-                fail("session.json is not a session and still could not be moved aside: \(error.localizedDescription); left in place")
-                return "session.json is not a valid session file and could not be moved aside (\(error.localizedDescription)). Where it is, every launch and the recovery agent read it again. Remove it or move it out of \(paths.appSupport.path)."
+                fail("session.json не является сессией, его не удалось убрать: \(error.localizedDescription). Файл оставлен на месте")
+                return "session.json не является корректным файлом сессии, и его не удалось убрать (\(error.localizedDescription)). Пока он на месте, каждый запуск и агент восстановления будут читать его снова. Удалите его или переместите из \(paths.appSupport.path)."
             }
         }
     }
@@ -2834,7 +2834,7 @@ final class SessionManager {
         Log.info("reconcile: \(Self.foreignSleepLine)")
         notifier.post(
             title: Self.foreignSleepTitle,
-            body: "pmset reports SleepDisabled 1, but Insomnia has no session and did not set it, so it is left alone. To re-enable sleep: \(Self.foreignSleepCommand). Ending an Insomnia session also sets it to 0."
+            body: "pmset сообщает SleepDisabled 1, но у Insomnia нет сессии и это значение выставила не она, поэтому она его не трогает. Чтобы снова включить сон: \(Self.foreignSleepCommand). Завершение сессии Insomnia тоже сбрасывает его в 0."
         )
     }
 
@@ -2901,7 +2901,7 @@ final class SessionManager {
         do {
             try persistState(before)
         } catch {
-            fail("could not restore the journal after a failed start: \(error.localizedDescription)")
+            fail("Не удалось восстановить журнал после неудачного запуска: \(error.localizedDescription)")
         }
         do {
             if let previous {
@@ -2910,7 +2910,7 @@ final class SessionManager {
                 try store.deleteSession()
             }
         } catch {
-            fail("could not restore session.json after a failed start: \(error.localizedDescription)")
+            fail("Не удалось восстановить session.json после неудачного запуска: \(error.localizedDescription)")
         }
     }
 
@@ -3008,7 +3008,7 @@ final class SessionManager {
             try journal { $0[keyPath: flag] = true }
             return line
         } catch {
-            return "\(what) \(saved): \(why); it could not be marked as refused (\(error.localizedDescription)), so it still counts as not restored."
+            return "\(what) \(saved): \(why); пометить это значение как отклонённое не удалось (\(error.localizedDescription)), поэтому оно по-прежнему считается невосстановленным."
         }
     }
 
@@ -3081,7 +3081,7 @@ final class SessionManager {
             try journal(clear)
         } catch {
             owedEdits[keyPath: owed] = .clear(saved)
-            errors.append("\(what) was set since its restore was refused, but the saved value could not be cleared: \(error.localizedDescription); it will be retried")
+            errors.append("\(Self.deviceName(what)): уровень изменили после отказа в восстановлении, но сохранённое значение не удалось очистить: \(error.localizedDescription). Попытка повторится")
         }
     }
 
@@ -3117,27 +3117,55 @@ final class SessionManager {
             try journal { $0[keyPath: flag] = false }
         } catch {
             owedEdits[keyPath: owed] = .unflag(saved)
-            errors.append("could not mark the \(what) for retry: \(error.localizedDescription); it still counts as not restored, and Insomnia retries it itself until the journal takes the change")
+            errors.append("не удалось пометить для повторной попытки (\(Self.deviceName(what))): \(error.localizedDescription). Значение по-прежнему считается невосстановленным, и Insomnia будет повторять сама, пока журнал не примет изменение")
         }
     }
     private func iso(_ d: Date) -> String {
         ISO8601DateFormatter().string(from: d)
     }
 
-    static let incompleteTitle = "Restore incomplete"
-    static let notEndedTitle = "Session not ended"
-    static let journalTitle = "Recovery journal unreadable"
-    static let commandRunningTitle = "Power command still running"
-    static let sessionFileTitle = "Session file unreadable"
-    static let foreignSleepTitle = "Sleep is disabled by something else"
+    /// Russian name of a brightness device for the menu and notification lines.
+    nonisolated static func deviceName(_ what: String) -> String {
+        switch what {
+        case "display brightness": "яркость экрана"
+        case "keyboard backlight": "подсветка клавиатуры"
+        default: what
+        }
+    }
+
+    /// Russian name of a transaction (`exclusive`) for the menu and notification lines.
+    nonisolated static func label(_ what: String) -> String {
+        switch what {
+        case "lid close": "Закрытие крышки"
+        case "lid open": "Открытие крышки"
+        case "start": "Запуск"
+        case "extend": "Продление"
+        case "end": "Завершение"
+        case "low power": "Режим энергосбережения"
+        case "low power check": "Проверка энергосбережения"
+        case "reconcile": "Сверка при запуске"
+        case "brightness re-check": "Повторная проверка яркости"
+        case "stop waiting for an output": "Отмена ожидания устройства"
+        case "output device change": "Смена устройства вывода"
+        case "audio retry": "Повтор восстановления звука"
+        default: what
+        }
+    }
+
+    static let incompleteTitle = "Восстановление не завершено"
+    static let notEndedTitle = "Сессия не завершена"
+    static let journalTitle = "Журнал восстановления не читается"
+    static let commandRunningTitle = "Команда питания ещё выполняется"
+    static let sessionFileTitle = "Файл сессии не читается"
+    static let foreignSleepTitle = "Сон отключён чем-то другим"
     static let foreignSleepCommand = "sudo pmset -a disablesleep 0"
-    static let foreignSleepLine = "Sleep is disabled by something other than Insomnia; to re-enable it: \(foreignSleepCommand)"
+    static let foreignSleepLine = "Сон отключён не Insomnia; чтобы снова включить его: \(foreignSleepCommand)"
 
     private static func endTitle(_ reason: EndReason, had: Bool) -> String {
         switch reason {
-        case .backstop: "Sleep restored"
-        case .startFailed: "Session not started"
-        default: had ? "Session ended" : "Session restored"
+        case .backstop: "Сон восстановлен"
+        case .startFailed: "Сессия не запущена"
+        default: had ? "Сессия завершена" : "Сессия восстановлена"
         }
     }
 
@@ -3151,40 +3179,40 @@ final class SessionManager {
     nonisolated static func stillMutedSentence(_ waiting: [SavedAudioOutput]) -> String {
         let names = waiting.map(\.label)
         if names.count == 1 {
-            return "\(names[0]) was not connected, so it is still muted. Insomnia restores its volume when it reconnects while Insomnia is running, or at the next launch."
+            return "Устройство \(names[0]) не было подключено, поэтому звук на нём всё ещё выключен. Insomnia вернёт громкость, когда оно подключится, пока Insomnia запущена, или при следующем запуске."
         }
-        let list = names.dropLast().joined(separator: ", ") + " and " + names[names.count - 1]
-        return "\(list) were not connected, so they are still muted. Insomnia restores each one's volume when it reconnects while Insomnia is running, or at the next launch."
+        let list = names.dropLast().joined(separator: ", ") + " и " + names[names.count - 1]
+        return "Устройства \(list) не были подключены, поэтому звук на них всё ещё выключен. Insomnia вернёт громкость каждого, когда оно подключится, пока Insomnia запущена, или при следующем запуске."
     }
 
     /// The incomplete-restore notification's sentence about saved output
     /// volume that could not be restored on a connected device.
     nonisolated static func audioRetrySentence(_ delay: TimeInterval) -> String {
-        "The recovery agent cannot restore output volume. Insomnia tries again in \(Int(delay)) s while it runs, and at its next launch."
+        "Агент восстановления не умеет возвращать громкость вывода. Insomnia повторит попытку через \(Int(delay)) с, пока запущена, и при следующем запуске."
     }
 
     /// The same for display brightness or keyboard backlight, which the
     /// next end (`restoreAll`) or the launch reconcile restores.
-    nonisolated static let brightnessRetrySentence = "The recovery agent cannot restore display brightness or keyboard backlight. Insomnia tries again when a later session ends, and at its next launch."
+    nonisolated static let brightnessRetrySentence = "Агент восстановления не умеет возвращать яркость экрана и подсветку клавиатуры. Insomnia повторит попытку при завершении следующей сессии и при следующем запуске."
 
     /// The menu line for an output device still waiting for its volume.
     nonisolated static func stillMutedLine(_ output: SavedAudioOutput) -> String {
-        "\(output.label) is still muted from a lid close; Insomnia restores it when it reconnects"
+        "\(output.label): звук всё ещё выключен после закрытия крышки; Insomnia вернёт его, когда устройство подключится"
     }
 
     private func endBody(_ reason: EndReason, outputsWaiting: Bool) -> String {
         switch reason {
-        case .timer: "Time is up. Sleep is back to normal."
-        case .user: "Ended by you. Sleep is back to normal."
-        case .quit: "Insomnia quit. Sleep is back to normal."
-        case .batteryFloor: "Battery fell below \(config.endFloor)%. Sleep is back to normal."
-        case .batteryUnreadable: "The battery level could not be read twice in a row, so the \(config.endFloor)% floor could not be applied. Sleep is back to normal."
-        case .thermalCritical: "Thermal state is critical. Sleep is back to normal."
+        case .timer: "Время вышло. Сон снова работает как обычно."
+        case .user: "Завершено вами. Сон снова работает как обычно."
+        case .quit: "Insomnia закрыта. Сон снова работает как обычно."
+        case .batteryFloor: "Заряд упал ниже \(config.endFloor)%. Сон снова работает как обычно."
+        case .batteryUnreadable: "Уровень заряда не удалось прочитать дважды подряд, поэтому порог \(config.endFloor)% применить не получилось. Сон снова работает как обычно."
+        case .thermalCritical: "Критический нагрев. Сон снова работает как обычно."
         case .backstop: outputsWaiting
-            ? "A previous session left changes behind. Sleep is back to normal."
-            : "A previous session left changes behind; everything has been undone."
-        case .recoveryUnavailable: "Insomnia could not arm its recovery agent for the session found on disk, so it ended the session. Sleep is back to normal."
-        case .startFailed: "Insomnia could not disable sleep, so no session was started. Sleep is back to normal."
+            ? "Предыдущая сессия оставила изменения. Сон снова работает как обычно."
+            : "Предыдущая сессия оставила изменения; всё отменено."
+        case .recoveryUnavailable: "Insomnia не смогла включить агент восстановления для найденной на диске сессии и завершила её. Сон снова работает как обычно."
+        case .startFailed: "Insomnia не смогла отключить сон, поэтому сессия не запущена. Сон снова работает как обычно."
         }
     }
 }
