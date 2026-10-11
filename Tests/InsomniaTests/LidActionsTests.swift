@@ -1060,7 +1060,7 @@ final class LidActionsTests: XCTestCase {
         XCTAssertEqual(s.savedAudioOutputs, [])
         XCTAssertTrue(s.sleepDisabledByUs)
         XCTAssertTrue(m.isActive)
-        XCTAssertEqual(m.remainingText, "58m")
+        XCTAssertEqual(m.remainingText, "58мин")
     }
 
     static let speakersSaved = SavedAudioOutput(deviceUID: FakeAudioControl.speakers, name: FakeAudioControl.speakersName, volume: 0.6, muted: false, saveID: nil)
@@ -1127,7 +1127,7 @@ final class LidActionsTests: XCTestCase {
         XCTAssertEqual(try h.store.loadState()?.savedAudioOutputs.map(\.withoutSaveID), [Self.headsetSaved])
         let lines = StatusItemController.menuItems(manager: m, status: RecordingStatusSource()).map(\.title)
         XCTAssertTrue(lines.contains("\u{26A0} USB Headset is still muted from a lid close; Insomnia restores it when it reconnects"), "\(lines)")
-        XCTAssertTrue(lines.contains("Stop waiting for USB Headset"), "\(lines)")
+        XCTAssertTrue(lines.contains("Не ждать USB Headset"), "\(lines)")
 
         // macOS keeps a device's mute, so the headset comes back muted.
         h.audio.connect("usb-headset", name: "USB Headset", volume: 0.3, muted: true)

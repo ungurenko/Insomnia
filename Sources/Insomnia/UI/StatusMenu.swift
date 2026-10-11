@@ -29,8 +29,8 @@ enum StatusMenu {
         let kind: Kind
     }
 
-    static let settingsTitle = "Settings\u{2026}"
-    static let quitTitle = "Quit Insomnia"
+    static let settingsTitle = "Настройки\u{2026}"
+    static let quitTitle = "Выйти из Insomnia"
 
     /// Disabled status lines, a separator, then Settings… and Quit. Empty
     /// lines are dropped, and the separator only appears when something
@@ -79,7 +79,7 @@ enum StatusMenu {
             // live item so the relaunch is still one click away, as it was
             // from the popover this menu replaced.
             for browser in throttledBrowsers {
-                out.append(Item(title: "Relaunch \(browser.name) unthrottled", kind: .relaunchBrowser(browser)))
+                out.append(Item(title: "Перезапустить \(browser.name) без замедления", kind: .relaunchBrowser(browser)))
             }
         }
         for problem in relaunchProblems.compactMap(present) {
@@ -104,7 +104,7 @@ enum StatusMenu {
         }
         for waiting in outputsWaiting {
             out.append(Item(title: "\u{26A0} \(SessionManager.stillMutedLine(waiting))", kind: .warning))
-            out.append(Item(title: "Stop waiting for \(waiting.label)", kind: .stopWaitingForOutput(waiting)))
+            out.append(Item(title: "Не ждать \(waiting.label)", kind: .stopWaitingForOutput(waiting)))
         }
         if !out.isEmpty {
             out.append(Item(title: "", kind: .separator))
@@ -180,14 +180,134 @@ enum StatusMenu {
 /// anything. Pure so the copy is testable; the controller shows it as an
 /// NSAlert.
 struct RelaunchPrompt: Equatable {
-    static let confirmTitle = "Quit and relaunch"
-    static let cancelTitle = "Cancel"
+    static let confirmTitle = "Перезапустить"
+    static let cancelTitle = "Отмена"
 
     let title: String
     let message: String
 
     init(browser name: String) {
-        title = "Quit and relaunch \(name)?"
-        message = "Insomnia quits \(name) and opens it again with the two flags that stop it throttling hidden windows. Your windows and tabs come back only if \(name) is set to reopen them on startup. If \(name) has not quit after \(Int(BrowserThrottle.quitTimeout)) s, nothing is relaunched."
+        title = "Перезапустить \(name)?"
+        message = "Insomnia закроет \(name) и откроет снова с настройками, при которых он не замедляет скрытые окна. Окна и вкладки вернутся, только если \(name) умеет открывать их при запуске. Если \(name) не закроется за \(Int(BrowserThrottle.quitTimeout)) с, перезапуска не будет."
+    }
+}
+
+/// The left-click menu on the eye: one click on a preset starts (or, while
+/// a session runs, extends) it; "Своё время…" opens the pills for anything
+/// else. The item list is pure so it can be tested without a menu bar.
+enum QuickMenu {
+    struct Item: Equatable {
+        enum Kind: Equatable {
+            case info
+            case separator
+            /// Start or extend by this many seconds.
+            case preset(TimeInterval)
+            case custom
+            case stop
+            case settings
+            case quit
+        }
+
+        let title: String
+        let kind: Kind
+    }
+
+    static let startHeader = "Не давать Маку спать"
+    static let extendHeader = "Добавить время"
+    static let customTitle = "Своё время\u{2026}"
+    static let stopTitle = "Остановить сейчас"
+
+    /// `remaining` is the live countdown and `endsAt` the clock time it
+    /// reaches; both nil while no session runs, which makes this the start
+    /// menu.
+    static func items(presets: [TimeInterval], remaining: String?, endsAt: String?) -> [Item] {
+        var out: [Item] = []
+        let running = remaining != nil
+        if let remaining {
+            let until = endsAt.map { ", до \($0)" } ?? ""
+            out.append(Item(title: "Осталось \(remaining)\(until)", kind: .info))
+            out.append(Item(title: "", kind: .separator))
+        }
+        out.append(Item(title: running ? extendHeader : startHeader, kind: .info))
+        for p in presets where p > 0 {
+            let label = presetTitle(p)
+            out.append(Item(title: running ? "+ \(label)" : label, kind: .preset(p)))
+        }
+        out.append(Item(title: customTitle, kind: .custom))
+        out.append(Item(title: "", kind: .separator))
+        if running {
+            out.append(Item(title: stopTitle, kind: .stop))
+            out.append(Item(title: "", kind: .separator))
+        }
+        out.append(Item(title: StatusMenu.settingsTitle, kind: .settings))
+        out.append(Item(title: StatusMenu.quitTitle, kind: .quit))
+        return out
+    }
+
+    /// "30 минут", "1 час", "1 час 30 минут", "3 дня". Seconds are floored
+    /// to the minute.
+    static func presetTitle(_ seconds: TimeInterval) -> String {
+        let totalMinutes = max(Int(seconds / 60), 0)
+        let days = totalMinutes / (24 * 60)
+        let hours = (totalMinutes % (24 * 60)) / 60
+        let minutes = totalMinutes % 60
+        var parts: [String] = []
+        if days > 0 { parts.append("\(days) \(plural(days, "день", "дня", "дней"))") }
+        if hours > 0 { parts.append("\(hours) \(plural(hours, "час", "часа", "часов"))") }
+        if minutes > 0 || parts.isEmpty { parts.append("\(minutes) \(plural(minutes, "минута", "минуты", "минут"))") }
+        return parts.joined(separator: " ")
+    }
+
+    /// Russian noun form for `n`: 1 день, 2 дня, 5 дней, 11 дней, 21 день.
+    static func plural(_ n: Int, _ one: String, _ few: String, _ many: String) -> String {
+        let tens = n % 100
+        if (11...14).contains(tens) { return many }
+        switch n % 10 {
+        case 1: return one
+        case 2...4: return few
+        default: return many
+        }
+    }
+
+    @MainActor
+    static func menu(
+        _ items: [Item],
+        target: AnyObject?,
+        preset: Selector,
+        custom: Selector,
+        stop: Selector,
+        settings: Selector,
+        quit: Selector
+    ) -> NSMenu {
+        let menu = NSMenu()
+        menu.autoenablesItems = false
+        for item in items {
+            let entry: NSMenuItem
+            switch item.kind {
+            case .separator:
+                menu.addItem(.separator())
+                continue
+            case .info:
+                entry = NSMenuItem(title: item.title, action: nil, keyEquivalent: "")
+                entry.isEnabled = false
+            case let .preset(seconds):
+                entry = NSMenuItem(title: item.title, action: preset, keyEquivalent: "")
+                entry.representedObject = seconds
+            case .custom:
+                entry = NSMenuItem(title: item.title, action: custom, keyEquivalent: "")
+            case .stop:
+                entry = NSMenuItem(title: item.title, action: stop, keyEquivalent: "")
+            case .settings:
+                entry = NSMenuItem(title: item.title, action: settings, keyEquivalent: ",")
+            case .quit:
+                entry = NSMenuItem(title: item.title, action: quit, keyEquivalent: "q")
+            }
+            if item.kind != .info {
+                entry.target = target
+                entry.isEnabled = true
+            }
+            menu.addItem(entry)
+        }
+        return menu
     }
 }

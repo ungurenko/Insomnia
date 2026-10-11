@@ -14,16 +14,16 @@ struct DurationInput: Equatable, Sendable {
 
         var placeholder: String {
             switch self {
-            case .days: return "Days"
-            case .hours: return "Hours"
-            case .minutes: return "Minutes"
+            case .days: return "Дни"
+            case .hours: return "Часы"
+            case .minutes: return "Минуты"
             }
         }
 
         /// Tooltip on the "?" badge.
         var help: String {
             switch self {
-            case .days: return "Up to \(DurationInput.maxDays) days"
+            case .days: return "До \(DurationInput.maxDays) дней"
             case .hours: return "0\u{2013}\(DurationInput.maxHours)"
             case .minutes: return "0\u{2013}\(DurationInput.maxMinutes)"
             }
@@ -163,7 +163,8 @@ struct DurationInput: Equatable, Sendable {
     }
 }
 
-/// Parses the short durations typed into settings ("30m", "2h", "1h30m", "3d").
+/// Parses the short durations typed into settings ("30m", "2h", "1h30m", "3d",
+/// or the same in Russian: "30м", "2ч", "1ч30м", "3д").
 enum DurationParser {
     /// Seconds, or nil when the text is not a duration. Bare numbers are minutes.
     static func seconds(from text: String) -> TimeInterval? {
@@ -186,9 +187,9 @@ enum DurationParser {
                 guard let n = Int(number) else { return nil }
                 let multiplier: Int
                 switch ch {
-                case "d": multiplier = 86_400
-                case "h": multiplier = 3_600
-                case "m": multiplier = 60
+                case "d", "д": multiplier = 86_400
+                case "h", "ч": multiplier = 3_600
+                case "m", "м": multiplier = 60
                 default: return nil
                 }
                 // Reject rather than trap on absurd values.

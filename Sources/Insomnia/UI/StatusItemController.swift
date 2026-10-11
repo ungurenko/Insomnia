@@ -108,7 +108,7 @@ final class StatusItemController: NSObject {
             manager: manager,
             onTapIcon: { [weak self] in self?.iconTapped() },
             onTapPill: { [weak self] field in self?.focus(field) },
-            onTapCountdown: { [weak self] in self?.customExtend() },
+            onTapCountdown: { [weak self] in self?.showQuickMenu() },
             onHoldEnd: { [weak self] in self?.holdToEnd() },
             onWidthChange: { [weak self] w in self?.widthChanged(w) }
         )
@@ -279,7 +279,7 @@ final class StatusItemController: NSObject {
         model.iconBounce += 1
         switch model.phase {
         case .idle:
-            expand(mode: .start)
+            showQuickMenu()
         case let .entering(mode):
             if model.pillsCollapsing {
                 // A close is in flight (Esc, a click away): the phase is
@@ -296,7 +296,7 @@ final class StatusItemController: NSObject {
             // Nothing to act on until the manager answers.
             break
         case .running:
-            customExtend()
+            showQuickMenu()
         }
     }
 
@@ -629,6 +629,59 @@ final class StatusItemController: NSObject {
     func customExtend() {
         guard manager.isActive else { return }
         expand(mode: .extend)
+    }
+
+    // MARK: Left-click menu
+
+    /// The eye or the countdown was clicked with no pills open: presets in a
+    /// plain menu, so the common case is two clicks and no typing. While a
+    /// session runs the same presets extend it.
+    private func showQuickMenu() {
+        guard let button else { return }
+        let running = manager.isActive
+        let endsAt = manager.session?.endsAt.formatted(date: .omitted, time: .shortened)
+        let items = QuickMenu.items(
+            presets: manager.config.presets,
+            remaining: running ? manager.countdownText : nil,
+            endsAt: running ? endsAt : nil
+        )
+        let menu = QuickMenu.menu(
+            items,
+            target: self,
+            preset: #selector(quickPreset(_:)),
+            custom: #selector(quickCustom),
+            stop: #selector(quickStop),
+            settings: #selector(menuOpenSettings),
+            quit: #selector(menuQuit)
+        )
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height + 4), in: button)
+    }
+
+    /// A preset picked from the left-click menu: the same run the pills'
+    /// Enter does, minus the typing. The session state is read now, not when
+    /// the menu opened: it can end while the menu is up.
+    @objc func quickPreset(_ sender: NSMenuItem) {
+        guard let seconds = sender.representedObject as? TimeInterval, seconds > 0 else { return }
+        switch model.phase {
+        case .idle:
+            run(mode: .start, duration: seconds)
+        case .running where manager.isActive:
+            run(mode: .extend, duration: seconds)
+        default:
+            break
+        }
+    }
+
+    @objc private func quickCustom() {
+        switch model.phase {
+        case .idle: expand(mode: .start)
+        case .running: customExtend()
+        default: break
+        }
+    }
+
+    @objc private func quickStop() {
+        holdToEnd()
     }
 
     // MARK: Right-click menu

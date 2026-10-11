@@ -55,10 +55,10 @@ final class MenuBarModel {
 
     /// What the item reads while a start is pending and there is no
     /// projected countdown to show.
-    static let startingText = "Starting\u{2026}"
+    static let startingText = "Запуск\u{2026}"
     /// What the item reads next to the pills after the manager refused a
     /// start. Short on purpose: the full reason is in the right-click menu.
-    static let startFailedText = "Couldn\u{2019}t start"
+    static let startFailedText = "Не запустилось"
 
     var phase: Phase = .idle
     /// Concise start failure shown beside the pills; cleared on the next

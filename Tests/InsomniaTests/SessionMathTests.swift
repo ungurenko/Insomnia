@@ -54,18 +54,18 @@ final class SessionMathTests: XCTestCase {
     }
 
     func testFormatFourShapes() {
-        XCTAssertEqual(SessionMath.formatRemaining(3 * 86400 + 2 * 3600 + 5 * 60), "3d 2h")
-        XCTAssertEqual(SessionMath.formatRemaining(2 * 3600 + 14 * 60 + 59), "2h 14m")
-        XCTAssertEqual(SessionMath.formatRemaining(14 * 60 + 1), "14m")
-        XCTAssertEqual(SessionMath.formatRemaining(59), "<1m")
-        XCTAssertEqual(SessionMath.formatRemaining(0), "<1m")
-        XCTAssertEqual(SessionMath.formatRemaining(-5), "<1m")
+        XCTAssertEqual(SessionMath.formatRemaining(3 * 86400 + 2 * 3600 + 5 * 60), "3д 2ч")
+        XCTAssertEqual(SessionMath.formatRemaining(2 * 3600 + 14 * 60 + 59), "2ч 14мин")
+        XCTAssertEqual(SessionMath.formatRemaining(14 * 60 + 1), "14мин")
+        XCTAssertEqual(SessionMath.formatRemaining(59), "<1мин")
+        XCTAssertEqual(SessionMath.formatRemaining(0), "<1мин")
+        XCTAssertEqual(SessionMath.formatRemaining(-5), "<1мин")
     }
 
     func testFormatDropsZeroSecondaryUnits() {
-        XCTAssertEqual(SessionMath.formatRemaining(2 * 3600), "2h")
-        XCTAssertEqual(SessionMath.formatRemaining(3 * 86400), "3d")
-        XCTAssertEqual(SessionMath.formatRemaining(60), "1m")
+        XCTAssertEqual(SessionMath.formatRemaining(2 * 3600), "2ч")
+        XCTAssertEqual(SessionMath.formatRemaining(3 * 86400), "3д")
+        XCTAssertEqual(SessionMath.formatRemaining(60), "1мин")
     }
 
     func testNextMinuteBoundary() {
@@ -95,8 +95,8 @@ final class SessionMathTests: XCTestCase {
 
     func testCountdownDaysShapeDropsDaysOnceUnderTwentyFourHours() {
         let two = 2 * 86400 + 3 * 3600 + 4 * 60 + 7
-        XCTAssertEqual(SessionMath.formatCountdown(remaining: TimeInterval(two), shape: .days), "2d 3:04:07")
-        XCTAssertEqual(SessionMath.formatCountdown(remaining: 86400, shape: .days), "1d 0:00:00")
+        XCTAssertEqual(SessionMath.formatCountdown(remaining: TimeInterval(two), shape: .days), "2д 3:04:07")
+        XCTAssertEqual(SessionMath.formatCountdown(remaining: 86400, shape: .days), "1д 0:00:00")
         // Rollover: the day component goes away for good, hours stay unpadded.
         XCTAssertEqual(SessionMath.formatCountdown(remaining: 86399, shape: .days), "23:59:59")
         XCTAssertEqual(SessionMath.formatCountdown(remaining: 4 * 60 + 7, shape: .days), "0:04:07")

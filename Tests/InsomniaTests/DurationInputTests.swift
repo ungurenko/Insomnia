@@ -158,8 +158,8 @@ final class DurationInputTests: XCTestCase {
     }
 
     func testFieldStrings() {
-        XCTAssertEqual(DurationInput.Field.days.placeholder, "Days")
-        XCTAssertEqual(DurationInput.Field.days.help, "Up to 30 days")
+        XCTAssertEqual(DurationInput.Field.days.placeholder, "Дни")
+        XCTAssertEqual(DurationInput.Field.days.help, "До 30 дней")
         XCTAssertEqual(DurationInput.Field.hours.help, "0\u{2013}23")
         XCTAssertEqual(DurationInput.Field.minutes.help, "0\u{2013}59")
     }
@@ -193,5 +193,7 @@ final class DurationInputTests: XCTestCase {
         XCTAssertNil(DurationParser.seconds(from: "9223372036854775d 1d")) // addition
         XCTAssertNil(DurationParser.seconds(from: "99999999999999999999h")) // Int(...) fails
         XCTAssertEqual(DurationParser.seconds(from: "1d 2h"), 93_600)
+        XCTAssertEqual(DurationParser.seconds(from: "1ч 30м"), 5_400)
+        XCTAssertEqual(DurationParser.seconds(from: "3д"), 3 * 86_400)
     }
 }

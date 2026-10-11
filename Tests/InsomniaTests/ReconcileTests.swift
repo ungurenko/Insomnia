@@ -62,7 +62,7 @@ final class ReconcileTests: XCTestCase {
         XCTAssertEqual(h.guardFake.calls, ["disablesleep 1"])
         XCTAssertEqual(m.scheduledDeadline, s.endsAt)
         XCTAssertEqual(h.backstop.arms, 1)
-        XCTAssertEqual(m.remainingText, "2h 14m")
+        XCTAssertEqual(m.remainingText, "2ч 14мин")
         XCTAssertEqual(try h.store.loadSession(), s)
         XCTAssertEqual(try h.store.loadState()?.sleepDisabledByUs, true)
     }
@@ -318,7 +318,7 @@ final class ReconcileTests: XCTestCase {
         XCTAssertEqual(h.guardFake.calls, ["disablesleep 1"])
         XCTAssertEqual(h.backstop.arms, 1)
         XCTAssertEqual(m.scheduledDeadline, s.endsAt)
-        XCTAssertEqual(m.remainingText, "30m")
+        XCTAssertEqual(m.remainingText, "30мин")
         XCTAssertNil(m.lastError)
     }
 
@@ -338,7 +338,7 @@ final class ReconcileTests: XCTestCase {
         XCTAssertEqual(s.extensions, [3600])
         XCTAssertEqual(try h.store.loadSession(), s)
         XCTAssertEqual(h.backstop.arms, 2)
-        XCTAssertEqual(m.remainingText, "1h 50m")
+        XCTAssertEqual(m.remainingText, "1ч 50мин")
     }
 
     func testEndRestoresFromDiskAndLeavesAgentLoaded() async throws {
@@ -371,12 +371,12 @@ final class ReconcileTests: XCTestCase {
     func testCountdownPauseResume() async throws {
         let m = h.makeManager()
         await m.start(duration: 3600)
-        XCTAssertEqual(m.remainingText, "1h")
+        XCTAssertEqual(m.remainingText, "1ч")
         m.pauseCountdown()
         h.clock.advance(120)
-        XCTAssertEqual(m.remainingText, "1h")
+        XCTAssertEqual(m.remainingText, "1ч")
         m.resumeCountdown()
-        XCTAssertEqual(m.remainingText, "58m")
+        XCTAssertEqual(m.remainingText, "58мин")
     }
 
     func testDeadlineTimerFiresEnd() async throws {

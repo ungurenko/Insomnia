@@ -79,7 +79,7 @@ final class UIStatusTests: XCTestCase {
         XCTAssertEqual(MenuBarModel.projectedStartCountdown(now: now, duration: 90 * 60, maxDuration: month), "1:30:00")
         let twoDays = MenuBarModel.projectedStartCountdown(now: now, duration: 2 * 86400, maxDuration: month)
         XCTAssertEqual(twoDays, SessionMath.formatCountdown(remaining: 2 * 86400, shape: .days))
-        XCTAssertTrue(twoDays.hasPrefix("2d "))
+        XCTAssertTrue(twoDays.hasPrefix("2д "))
         // The projection ticks: eight seconds into the wait it reads eight
         // seconds less, in the shape it was projected in.
         let projection = MenuBarModel.projectedStart(now: now, duration: 90 * 60, maxDuration: month)
@@ -146,12 +146,12 @@ final class UIStatusTests: XCTestCase {
         let m = h.makeManager()
         await m.start(duration: 4 * 3600)
         XCTAssertEqual(m.countdownText, "4:00:00")
-        XCTAssertEqual(m.remainingText, "4h")
+        XCTAssertEqual(m.remainingText, "4ч")
 
         h.clock.advance(3 * 3600 + 55 * 60 + 53)
         m.refreshCountdown()
         XCTAssertEqual(m.countdownText, "0:04:07")
-        XCTAssertEqual(m.remainingText, "4m")
+        XCTAssertEqual(m.remainingText, "4мин")
 
         m.pauseCountdown()
         h.clock.advance(60)
@@ -252,7 +252,7 @@ final class UIStatusTests: XCTestCase {
             StatusMenu.Item(title: "Lid: closed \u{00B7} 82%", kind: .info),
             StatusMenu.Item(title: "3 apps frozen", kind: .info),
             StatusMenu.Item(title: "\u{26A0} Chrome is throttled", kind: .warning),
-            StatusMenu.Item(title: "Relaunch Chrome unthrottled", kind: .relaunchBrowser(Self.chrome)),
+            StatusMenu.Item(title: "Перезапустить Chrome без замедления", kind: .relaunchBrowser(Self.chrome)),
             StatusMenu.Item(title: "", kind: .separator),
             StatusMenu.Item(title: StatusMenu.settingsTitle, kind: .settings),
             StatusMenu.Item(title: StatusMenu.quitTitle, kind: .quit),
@@ -372,13 +372,13 @@ final class UIStatusTests: XCTestCase {
     /// browser's own startup setting, and gives the 10 s rule.
     func testRelaunchPromptCopy() {
         let prompt = RelaunchPrompt(browser: "Chrome")
-        XCTAssertEqual(prompt.title, "Quit and relaunch Chrome?")
+        XCTAssertEqual(prompt.title, "Перезапустить Chrome?")
         XCTAssertEqual(
             prompt.message,
-            "Insomnia quits Chrome and opens it again with the two flags that stop it throttling hidden windows. Your windows and tabs come back only if Chrome is set to reopen them on startup. If Chrome has not quit after 10 s, nothing is relaunched."
+            "Insomnia закроет Chrome и откроет снова с настройками, при которых он не замедляет скрытые окна. Окна и вкладки вернутся, только если Chrome умеет открывать их при запуске. Если Chrome не закроется за 10 с, перезапуска не будет."
         )
-        XCTAssertEqual(RelaunchPrompt.confirmTitle, "Quit and relaunch")
-        XCTAssertEqual(RelaunchPrompt.cancelTitle, "Cancel")
+        XCTAssertEqual(RelaunchPrompt.confirmTitle, "Перезапустить")
+        XCTAssertEqual(RelaunchPrompt.cancelTitle, "Отмена")
     }
 
     /// Greptile caught this as a regression: replacing the popover with a

@@ -43,21 +43,21 @@ enum SessionMath {
         endsAt.timeIntervalSince(now) <= 0
     }
 
-    /// Minute-granularity remaining time: "3d 2h", "2h 14m", "14m", "<1m".
+    /// Minute-granularity remaining time: "3д 2ч", "2ч 14мин", "14мин", "<1мин".
     /// Zero secondary units are dropped ("2h", "3d"). Seconds are floored.
     static func formatRemaining(_ interval: TimeInterval) -> String {
         let totalMinutes = Int(max(interval, 0) / 60)
-        if totalMinutes < 1 { return "<1m" }
+        if totalMinutes < 1 { return "<1мин" }
         let days = totalMinutes / (24 * 60)
         let hours = (totalMinutes % (24 * 60)) / 60
         let minutes = totalMinutes % 60
         if days > 0 {
-            return hours > 0 ? "\(days)d \(hours)h" : "\(days)d"
+            return hours > 0 ? "\(days)д \(hours)ч" : "\(days)д"
         }
         if hours > 0 {
-            return minutes > 0 ? "\(hours)h \(minutes)m" : "\(hours)h"
+            return minutes > 0 ? "\(hours)ч \(minutes)мин" : "\(hours)ч"
         }
-        return "\(minutes)m"
+        return "\(minutes)мин"
     }
 
     /// Live menu bar countdown, ticking every second in a fixed `shape`.
@@ -77,7 +77,7 @@ enum SessionMath {
         case .days:
             let days = total / 86400
             guard days > 0 else { return clock(hours: total / 3600) }
-            return "\(days)d " + clock(hours: (total % 86400) / 3600)
+            return "\(days)д " + clock(hours: (total % 86400) / 3600)
         case .hours:
             return clock(hours: total / 3600)
         case .minutes:

@@ -193,7 +193,7 @@ struct StatusRootView: View {
             .transition(Motion.countdownTransition(reduceMotion: reduceMotion))
             .contentShape(Rectangle())
             .onTapGesture(perform: onTapCountdown)
-            .accessibilityLabel(model.phase == .starting ? "Starting session" : countdownText)
+            .accessibilityLabel(model.phase == .starting ? "Сессия запускается" : countdownText)
     }
 
     /// The manager refused the start: say so next to the pills the value is
@@ -206,6 +206,6 @@ struct StatusRootView: View {
             .lineLimit(1)
             .fixedSize()
             .transition(Motion.errorTransition(reduceMotion: reduceMotion))
-            .accessibilityLabel("Start failed")
+            .accessibilityLabel("Не удалось запустить")
     }
 }

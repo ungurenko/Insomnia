@@ -99,8 +99,8 @@ final class UIStartupTests: XCTestCase {
         XCTAssertFalse(rig.model.phase.showsRunningControls)
         // The countdown the session will read is projected the moment Enter
         // is pressed; the live one replaces it on confirmation.
-        XCTAssertEqual(rig.model.pendingCountdown, "1d 0:00:00")
-        XCTAssertEqual(MenuBarModel.startingText, "Starting\u{2026}")
+        XCTAssertEqual(rig.model.pendingCountdown, "1д 0:00:00")
+        XCTAssertEqual(MenuBarModel.startingText, "Запуск\u{2026}")
         XCTAssertNil(rig.model.startError)
         // The typed value survives the wait, in case the start is refused.
         XCTAssertEqual(rig.model.input.total, 86400)
@@ -113,8 +113,31 @@ final class UIStartupTests: XCTestCase {
         XCTAssertTrue(rig.model.phase.showsRunningControls)
         XCTAssertNil(rig.model.pendingCountdown)
         XCTAssertNil(rig.model.startError)
-        XCTAssertEqual(rig.manager.countdownText, "1d 0:00:00")
+        XCTAssertEqual(rig.manager.countdownText, "1д 0:00:00")
         XCTAssertEqual(rig.h.backstop.arms, 1)
+    }
+
+    /// A preset picked from the left-click menu starts a session with no
+    /// pills, and picking one again while it runs extends that session.
+    @MainActor
+    func testQuickMenuPresetStartsThenExtendsTheSession() async {
+        let rig = Rig()
+        let item = NSMenuItem()
+        item.representedObject = TimeInterval(1800)
+        rig.controller.quickPreset(item)
+        let started = await waitUntil { rig.manager.isActive && rig.model.phase == .running }
+        XCTAssertTrue(started)
+        XCTAssertFalse(rig.model.slotsPresent, "no pills on the way")
+        let firstEnd = rig.manager.session?.endsAt
+
+        item.representedObject = TimeInterval(3600)
+        rig.controller.quickPreset(item)
+        let extended = await waitUntil { rig.manager.session?.endsAt != firstEnd }
+        XCTAssertTrue(extended)
+        if let firstEnd, let newEnd = rig.manager.session?.endsAt {
+            XCTAssertEqual(newEnd.timeIntervalSince(firstEnd), 3600, accuracy: 1)
+        }
+        XCTAssertEqual(rig.model.phase, .running)
     }
 
     /// Bare Enter (default preset) goes through the same pending phase.
@@ -216,7 +239,7 @@ final class UIStartupTests: XCTestCase {
         ok = await waitUntil { rig.model.startError == nil }
         XCTAssertTrue(ok)
         XCTAssertFalse(rig.model.slotsPresent)
-        XCTAssertEqual(rig.manager.countdownText, "1d 0:00:00")
+        XCTAssertEqual(rig.manager.countdownText, "1д 0:00:00")
     }
 
     /// Typing after a refusal dismisses the error; so does closing the pills.

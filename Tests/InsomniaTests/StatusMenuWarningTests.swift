@@ -116,7 +116,7 @@ final class StatusMenuWarningTests: XCTestCase {
             relaunchBrowser: #selector(NSObject.description),
             stopWaitingForOutput: #selector(NSObject.description)
         )
-        let entry = menu.items.first { $0.title == "Relaunch Arc unthrottled" }
+        let entry = menu.items.first { $0.title == "Перезапустить Arc без замедления" }
         XCTAssertEqual(entry?.representedObject as? ThrottledBrowser, arc)
     }
 
@@ -130,9 +130,9 @@ final class StatusMenuWarningTests: XCTestCase {
         let items = StatusMenu.items(sessionActive: false, sleepHeld: false, machine: nil, actions: nil, throttledBrowsers: [], error: nil, outputsWaiting: [headset, unnamed])
         XCTAssertEqual(Array(items.prefix(4)), [
             StatusMenu.Item(title: "\u{26A0} USB Headset is still muted from a lid close; Insomnia restores it when it reconnects", kind: .warning),
-            StatusMenu.Item(title: "Stop waiting for USB Headset", kind: .stopWaitingForOutput(headset)),
+            StatusMenu.Item(title: "Не ждать USB Headset", kind: .stopWaitingForOutput(headset)),
             StatusMenu.Item(title: "\u{26A0} 70-8C-F2:output is still muted from a lid close; Insomnia restores it when it reconnects", kind: .warning),
-            StatusMenu.Item(title: "Stop waiting for 70-8C-F2:output", kind: .stopWaitingForOutput(unnamed)),
+            StatusMenu.Item(title: "Не ждать 70-8C-F2:output", kind: .stopWaitingForOutput(unnamed)),
         ])
         let menu = StatusMenu.menu(
             items,
@@ -142,7 +142,7 @@ final class StatusMenuWarningTests: XCTestCase {
             relaunchBrowser: #selector(NSObject.description),
             stopWaitingForOutput: #selector(NSObject.description)
         )
-        let entry = menu.items.first { $0.title == "Stop waiting for USB Headset" }
+        let entry = menu.items.first { $0.title == "Не ждать USB Headset" }
         XCTAssertEqual(entry?.representedObject as? SavedAudioOutput, headset)
         XCTAssertEqual(entry?.isEnabled, true)
     }
@@ -159,7 +159,7 @@ final class StatusMenuWarningTests: XCTestCase {
         let throttle = try XCTUnwrap(StatusLines.throttleWarning(["Arc"]))
         XCTAssertEqual(items.map(\.title).filter { $0.contains("Arc") || $0.contains("Chrome") || $0.contains("restore") }, [
             throttle,
-            "Relaunch Arc unthrottled",
+            "Перезапустить Arc без замедления",
             "\u{26A0} \(problem)",
             "\u{26A0} \(other)",
             "\u{26A0} restore failed",
