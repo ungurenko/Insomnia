@@ -116,6 +116,8 @@ struct StatusRootView: View {
             }
             .onTapGesture(perform: onTapIcon)
             .accessibilityLabel("Insomnia")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { onTapIcon() }
     }
 
     /// All three slots are in the layout whenever they are present;
@@ -194,6 +196,8 @@ struct StatusRootView: View {
             .contentShape(Rectangle())
             .onTapGesture(perform: onTapCountdown)
             .accessibilityLabel(model.phase == .starting ? "Сессия запускается" : countdownText)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { onTapCountdown() }
     }
 
     /// The manager refused the start: say so next to the pills the value is

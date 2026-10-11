@@ -280,3 +280,23 @@ final class CommandCancellationTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: sentinel), "child was launched after cancellation")
     }
 }
+
+final class ShellTimeoutTests: XCTestCase {
+    /// A child that kills itself with a signal long before the limit is a
+    /// failed command, not a timeout: the Docker probe reports the two
+    /// differently.
+    func testAChildEndedBySomeOtherSignalIsNotATimeout() async throws {
+        let r = try await Shell.run("/bin/sh", ["-c", "kill -TERM $$"], timeout: 30)
+        XCTAssertEqual(r.status, SIGTERM)
+    }
+
+    func testAChildPastTheLimitIsATimeout() async {
+        do {
+            _ = try await Shell.run("/bin/sleep", ["30"], timeout: 0.5)
+            XCTFail("sleep 30 finished within 0.5 s")
+        } catch ShellTimeoutError.timedOut {
+        } catch {
+            XCTFail("unexpected error: \(error)")
+        }
+    }
+}

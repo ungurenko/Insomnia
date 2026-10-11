@@ -18,7 +18,19 @@ enum HotspotJoinError: Error, LocalizedError {
 }
 
 struct CoreWLANHotspotJoiner: HotspotJoining {
+    /// The scan and the association block for seconds, so they run on a
+    /// GCD thread rather than holding a thread of Swift's cooperative pool.
     func join(ssid: String, password: String, interfaceName: String) async throws -> Bool {
+        try await withCheckedThrowingContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                continuation.resume(with: Result {
+                    try Self.joinBlocking(ssid: ssid, password: password, interfaceName: interfaceName)
+                })
+            }
+        }
+    }
+
+    private static func joinBlocking(ssid: String, password: String, interfaceName: String) throws -> Bool {
         guard let interface = CWWiFiClient.shared().interface(withName: interfaceName) else {
             throw HotspotJoinError.missingInterface(interfaceName)
         }

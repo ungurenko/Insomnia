@@ -60,6 +60,11 @@ struct PillView: View {
         .contentShape(Rectangle())
         .help(field.help)
         .onTapGesture(perform: onTap)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(field.placeholder)
+        .accessibilityValue(text ?? "")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { onTap() }
         .phaseAnimator([CGFloat(1), Motion.bounceScale(reduceMotion: reduceMotion), 1], trigger: focused ? focusBounce : 0) { content, scale in
             content.scaleEffect(scale)
         } animation: { _ in

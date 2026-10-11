@@ -14,7 +14,14 @@ enum ShellTimeoutError: Error, LocalizedError {
 extension Shell {
     private final class ProcessBox: @unchecked Sendable {
         let process: Process
+        private let lock = NSLock()
+        private var killed = false
         init(_ p: Process) { process = p }
+
+        /// Set by the timeout killer once it has signalled the child, so a
+        /// child ended by some other signal is not reported as a timeout.
+        var killedByTimeout: Bool { lock.withLock { killed } }
+        func markKilledByTimeout() { lock.withLock { killed = true } }
     }
 
     /// `Shell.run` with a wall-clock limit. On timeout the child is killed
@@ -42,6 +49,7 @@ extension Shell {
                 let box = ProcessBox(process)
                 let killer = DispatchWorkItem {
                     guard box.process.isRunning else { return }
+                    box.markKilledByTimeout()
                     box.process.terminate()
                     DispatchQueue.global().asyncAfter(deadline: .now() + 1) {
                         if box.process.isRunning { kill(box.process.processIdentifier, SIGKILL) }
@@ -60,7 +68,7 @@ extension Shell {
                 let outData = out.fileHandleForReading.readDataToEndOfFile()
                 group.wait()
                 childExit.wait()
-                let timedOut = !killer.isCancelled && process.terminationReason == .uncaughtSignal
+                let timedOut = box.killedByTimeout && process.terminationReason == .uncaughtSignal
                 killer.cancel()
 
                 if timedOut {
