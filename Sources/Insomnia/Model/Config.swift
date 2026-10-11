@@ -195,27 +195,27 @@ struct LidCloseDefaultsChange: Codable, Equatable, Sendable {
     var turnedOffFreezeAll: Bool
     var turnedOnMute: Bool
 
-    static let title = "Lid-close settings changed"
+    static let title = "Настройки закрытия крышки изменены"
 
     /// The changes as one clause, for example: "Mute audio on lid close"
     /// is now on.
     var changes: String {
         var parts: [String] = []
-        if turnedOffFreezeAll { parts.append("\"Freeze every other app while the lid is closed\" is now off") }
-        if turnedOnMute { parts.append("\"Mute audio on lid close\" is now on") }
-        return parts.joined(separator: " and ")
+        if turnedOffFreezeAll { parts.append("«Замораживать все остальные приложения при закрытой крышке» теперь выключено") }
+        if turnedOnMute { parts.append("«Выключать звук при закрытии крышки» теперь включено") }
+        return parts.joined(separator: " и ")
     }
 
     private var both: Bool { turnedOffFreezeAll && turnedOnMute }
 
     var notificationBody: String {
-        "This update changed \(both ? "two lid-close settings" : "a lid-close setting"): \(changes). "
-            + "To change \(both ? "them" : "it") back, choose Settings\u{2026} from the Insomnia menu bar icon and look under Lid-close actions."
+        "Это обновление изменило \(both ? "две настройки закрытия крышки" : "настройку закрытия крышки"): \(changes). "
+            + "Чтобы вернуть \(both ? "их" : "её") обратно, выберите «Настройки\u{2026}» в меню значка Insomnia и найдите раздел «Действия при закрытии крышки»."
     }
 
     var settingsLine: String {
-        "This update changed \(both ? "two lid-close settings" : "a lid-close setting"): \(changes). "
-            + "\(both ? "Both toggles are" : "The toggle is") below."
+        "Это обновление изменило \(both ? "две настройки закрытия крышки" : "настройку закрытия крышки"): \(changes). "
+            + "\(both ? "Оба переключателя находятся" : "Переключатель находится") ниже."
     }
 }
 

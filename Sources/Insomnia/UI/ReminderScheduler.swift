@@ -52,14 +52,14 @@ final class ReminderScheduler {
     private func fire(endsAt: Date) {
         scheduledFor = nil
         timer = nil
-        let body = "Sleep is restored at \(endsAt.formatted(date: .omitted, time: .shortened)). Extend from the menu bar."
+        let body = "Сон вернётся в \(endsAt.formatted(date: .omitted, time: .shortened)). Продлить можно в строке меню."
         Log.info("reminder: 5 minutes left")
         guard Self.canNotify else {
             Log.info("reminder not posted: not running from an app bundle")
             return
         }
         let content = UNMutableNotificationContent()
-        content.title = "5 minutes left"
+        content.title = "Осталось 5 минут"
         content.body = body
         content.sound = .default
         let request = UNNotificationRequest(identifier: "insomnia.reminder", content: content, trigger: nil)

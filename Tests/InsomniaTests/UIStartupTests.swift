@@ -160,7 +160,7 @@ final class UIStartupTests: XCTestCase {
         XCTAssertNil(rig.model.pendingCountdown)
         // Concise in the item; the manager keeps the full message for the menu.
         XCTAssertEqual(rig.model.startError, MenuBarModel.startFailedText)
-        XCTAssertEqual(rig.manager.lastError, "could not arm backstop: fake launchd refused")
+        XCTAssertEqual(rig.manager.lastError, "Не удалось включить агент восстановления: fake launchd refused")
         XCTAssertLessThan(MenuBarModel.startFailedText.count, 24)
     }
 
@@ -452,7 +452,7 @@ final class UIStartupTests: XCTestCase {
         XCTAssertTrue(rig.manager.isActive)
         XCTAssertEqual(rig.manager.session?.endsAt, endsAt)
         XCTAssertEqual(rig.manager.countdownText, "1:00:00")
-        XCTAssertEqual(rig.manager.lastError, "could not confirm backstop: fake launchd refused")
+        XCTAssertEqual(rig.manager.lastError, "Не удалось подтвердить работу агента восстановления: fake launchd refused")
         XCTAssertEqual(rig.model.phase, .running)
         XCTAssertNil(rig.model.startError)
         XCTAssertEqual(rig.model.visiblePills, 0)

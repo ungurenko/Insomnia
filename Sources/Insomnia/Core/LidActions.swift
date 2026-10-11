@@ -390,7 +390,7 @@ final class LidActions {
                 if docker { s.dockerFrozen = true }
             }
         } catch {
-            manager.fail("lid close: could not journal the freeze of \(group.name) (\(group.bundleId)): \(error.localizedDescription); its \(candidates.count) pid(s) were left running")
+            manager.fail("Закрытие крышки: не удалось записать в журнал заморозку \(group.name) (\(group.bundleId)): \(error.localizedDescription). Процессов оставлено работать: \(candidates.count)")
             return
         }
         if let beforeSignal, await !beforeSignal() {
@@ -444,9 +444,9 @@ final class LidActions {
                 docker: setsDockerFlag && stuck.isEmpty
             ))
             let outcome = stuck.isEmpty
-                ? "so this freeze of \(group.name) is undone"
-                : "and pid(s) \(stuck.map(String.init).joined(separator: ", ")) may still be stopped; they stay journaled without identity, so Insomnia will not resume them, and lid open reports the ones still stopped"
-            manager.fail("lid close: could not confirm the freeze of \(group.name) (\(group.bundleId)) in the journal: \(error.localizedDescription); resumed \(undo.resumed.count) of the \(confirmed.count) pid(s) it had just stopped, \(outcome)")
+                ? "поэтому заморозка \(group.name) отменена"
+                : "а процессы \(stuck.map(String.init).joined(separator: ", ")) могут оставаться остановленными; они записаны в журнал без признаков идентификации, поэтому Insomnia не будет их возобновлять, а при открытии крышки сообщит о тех, что всё ещё остановлены"
+            manager.fail("Закрытие крышки: не удалось подтвердить в журнале заморозку \(group.name) (\(group.bundleId)): \(error.localizedDescription). Возобновлено \(undo.resumed.count) из \(confirmed.count) только что остановленных процессов, \(outcome)")
             return
         }
         Log.info("froze \(group.name) (\(report.suspended.count) pid(s), \(report.skipped.count) skipped)")

@@ -130,7 +130,7 @@ final class BrowserThrottleTests: XCTestCase {
         let empty = FakeBrowserProcesses(pids: [42])
         let outcomeOfEmpty = await self.throttle(args: " \n", processes: empty).relaunchUnthrottled(bundleId: "com.google.Chrome")
 
-        XCTAssertEqual(outcomeOfEmpty, .argumentsUnreadable("ps printed nothing for pid 42"))
+        XCTAssertEqual(outcomeOfEmpty, .argumentsUnreadable("команда ps ничего не вывела для процесса 42"))
         XCTAssertEqual(empty.terminated.count, 0)
         XCTAssertEqual(empty.launches.count, 0)
     }
@@ -263,7 +263,7 @@ final class BrowserThrottleTests: XCTestCase {
 
         let outcome = await throttle.relaunchUnthrottled(bundleId: "com.google.Chrome")
 
-        XCTAssertEqual(outcome, .argumentsUnreadable("pid 42 exited while they were read, or could not be checked"))
+        XCTAssertEqual(outcome, .argumentsUnreadable("процесс 42 завершился, пока их читали, или его не удалось проверить"))
         XCTAssertEqual(processes.terminated, [])
         XCTAssertEqual(processes.launches.count, 0)
         XCTAssertEqual(processes.processes.filter { $0.bundleId == "com.apple.finder" }.map(\.running), [true])
@@ -284,13 +284,13 @@ final class BrowserThrottleTests: XCTestCase {
 
         let outcome = await throttle.relaunchUnthrottled(bundleId: "com.google.Chrome")
 
-        XCTAssertEqual(outcome, .argumentsUnreadable("the start time of pid 42 could not be read to check them"))
+        XCTAssertEqual(outcome, .argumentsUnreadable("не удалось прочитать время запуска процесса 42, чтобы их проверить"))
         XCTAssertEqual(reads.value, 0)
         XCTAssertEqual(processes.terminated, [])
         XCTAssertEqual(processes.launches.count, 0)
         XCTAssertEqual(
             outcome.explanation(browser: "Chrome"),
-            "Could not read Chrome's profile arguments (the start time of pid 42 could not be read to check them), so a relaunch could have opened the wrong profile. Chrome was not quit."
+            "Не удалось прочитать параметры профиля Chrome (не удалось прочитать время запуска процесса 42, чтобы их проверить), поэтому перезапуск мог бы открыть не тот профиль. Chrome не закрывался."
         )
     }
 
@@ -349,23 +349,23 @@ final class BrowserThrottleTests: XCTestCase {
         XCTAssertNil(RelaunchOutcome.cancelled.explanation(browser: "Chrome"))
         XCTAssertEqual(
             RelaunchOutcome.stillRunning.explanation(browser: "Chrome"),
-            "Chrome did not quit within 10 s, so nothing was relaunched. It may still quit later. If it does, open it again yourself."
+            "Chrome не закрылся за 10 с, поэтому перезапуска не было. Он может закрыться позже. Если это случится, откройте его снова сами."
         )
         XCTAssertEqual(
             RelaunchOutcome.notRunning.explanation(browser: "Arc"),
-            "Arc is not running. Nothing was quit or relaunched."
+            "Arc не запущен. Ничего не закрывалось и не перезапускалось."
         )
         XCTAssertEqual(
             RelaunchOutcome.argumentsUnreadable("ps timed out").explanation(browser: "Arc"),
-            "Could not read Arc's profile arguments (ps timed out), so a relaunch could have opened the wrong profile. Arc was not quit."
+            "Не удалось прочитать параметры профиля Arc (ps timed out), поэтому перезапуск мог бы открыть не тот профиль. Arc не закрывался."
         )
         XCTAssertEqual(
             RelaunchOutcome.launchFailed("open exited with status 1").explanation(browser: "Chromium"),
-            "Chromium quit but could not be relaunched: open exited with status 1. Open it yourself."
+            "Chromium закрылся, но его не удалось запустить снова: open exited with status 1. Откройте его сами."
         )
         XCTAssertEqual(
             RelaunchOutcome.didNotStart.explanation(browser: "Chromium"),
-            "Chromium quit and was asked to open again, but it was not running after 5 s. Open it yourself."
+            "Chromium закрылся, ему было отправлено указание открыться снова, но через 5 с он так и не запустился. Откройте его сами."
         )
     }
 }

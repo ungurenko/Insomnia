@@ -691,8 +691,8 @@ final class LidActionsTests: XCTestCase {
         XCTAssertEqual(h.display.sets, [0, 0.7])
         XCTAssertEqual(h.keyboard.sets, [0, 0.5])
         let err = try XCTUnwrap(m.lastError)
-        XCTAssertTrue(err.contains("restored but the journal entry could not be cleared"), err)
-        XCTAssertTrue(err.contains("it will be retried"), err)
+        XCTAssertTrue(err.contains("яркость экрана восстановлена, но запись в журнале не удалось убрать"), err)
+        XCTAssertTrue(err.contains("Попытка повторится"), err)
         let s = try XCTUnwrap(try h.store.loadState())
         XCTAssertEqual(s.savedDisplayBrightness, 0.7, "the entry must stay for the next undo")
         XCTAssertEqual(s.savedKeyboardBrightness, 0.5)
@@ -888,7 +888,7 @@ final class LidActionsTests: XCTestCase {
         await actions.onOpen()
 
         let err = try XCTUnwrap(m.lastError)
-        XCTAssertTrue(err.contains("could not restore display brightness"), err)
+        XCTAssertTrue(err.contains("не удалось восстановить яркость экрана"), err)
         let s = try XCTUnwrap(try h.store.loadState())
         XCTAssertEqual(s.savedDisplayBrightness, 0.7, "a failed restore stays journaled for the next undo")
         XCTAssertNil(s.savedKeyboardBrightness, "the keyboard is restored independently")
@@ -919,7 +919,7 @@ final class LidActionsTests: XCTestCase {
         XCTAssertEqual(outcome, .incomplete(agentArmed: true))
         let post = try XCTUnwrap(h.notifier.posts.last)
         XCTAssertEqual(post.title, SessionManager.incompleteTitle)
-        XCTAssertEqual(post.body, "could not restore display brightness: set brightness. The recovery agent cannot restore display brightness or keyboard backlight. Insomnia tries again when a later session ends, and at its next launch.")
+        XCTAssertEqual(post.body, "не удалось восстановить яркость экрана: set brightness. Агент восстановления не умеет возвращать яркость экрана и подсветку клавиатуры. Insomnia повторит попытку при завершении следующей сессии и при следующем запуске.")
         XCTAssertEqual(try h.store.loadState()?.savedDisplayBrightness, 0.7)
 
         h.display.throwOnSet = false
@@ -938,7 +938,7 @@ final class LidActionsTests: XCTestCase {
         await actions.onOpen()
 
         let err = try XCTUnwrap(m.lastError)
-        XCTAssertTrue(err.contains("could not restore keyboard backlight"), err)
+        XCTAssertTrue(err.contains("не удалось восстановить подсветку клавиатуры"), err)
         let s = try XCTUnwrap(try h.store.loadState())
         XCTAssertNil(s.savedDisplayBrightness)
         XCTAssertEqual(s.savedKeyboardBrightness, 0.5)
@@ -1126,7 +1126,7 @@ final class LidActionsTests: XCTestCase {
         XCTAssertFalse(h.audio.muted)
         XCTAssertEqual(try h.store.loadState()?.savedAudioOutputs.map(\.withoutSaveID), [Self.headsetSaved])
         let lines = StatusItemController.menuItems(manager: m, status: RecordingStatusSource()).map(\.title)
-        XCTAssertTrue(lines.contains("\u{26A0} USB Headset is still muted from a lid close; Insomnia restores it when it reconnects"), "\(lines)")
+        XCTAssertTrue(lines.contains("\u{26A0} USB Headset: звук всё ещё выключен после закрытия крышки; Insomnia вернёт его, когда устройство подключится"), "\(lines)")
         XCTAssertTrue(lines.contains("Stop waiting for USB Headset"), "\(lines)")
 
         // macOS keeps a device's mute, so the headset comes back muted.
@@ -1182,8 +1182,8 @@ final class LidActionsTests: XCTestCase {
         XCTAssertEqual(h.audio.applied.count, 0)
         XCTAssertFalse(h.audio.muted, "the speakers are not touched")
         let post = try XCTUnwrap(h.notifier.posts.last)
-        XCTAssertEqual(post.title, "Session ended")
-        XCTAssertEqual(post.body, "Insomnia quit. Sleep is back to normal. USB Headset was not connected, so it is still muted. Insomnia restores its volume when it reconnects while Insomnia is running, or at the next launch.")
+        XCTAssertEqual(post.title, "Сессия завершена")
+        XCTAssertEqual(post.body, "Insomnia закрыта. Сон снова работает как обычно. Устройство USB Headset не было подключено, поэтому звук на нём всё ещё выключен. Insomnia вернёт громкость, когда оно подключится, пока Insomnia запущена, или при следующем запуске.")
         XCTAssertFalse(h.notifier.posts.contains { $0.title == SessionManager.incompleteTitle })
         XCTAssertEqual(m.outputsWaitingForRestore.map(\.withoutSaveID), [Self.headsetSaved])
 
@@ -1278,7 +1278,7 @@ final class LidActionsTests: XCTestCase {
         XCTAssertFalse(h.audio.muted)
         XCTAssertNotNil(m.lastError)
         // The later lid-close entries fail to clear too and take lastError.
-        XCTAssertTrue(logText().contains("audio restored on MacBook Pro Speakers but the journal entry could not be cleared"), logText())
+        XCTAssertTrue(logText().contains("звук на устройстве MacBook Pro Speakers восстановлен, но запись в журнале не удалось убрать"), logText())
         XCTAssertEqual(try h.store.loadState()?.savedAudioOutputs.map(\.withoutSaveID), [Self.speakersSaved])
 
         h.audio.onApply = nil
@@ -1310,7 +1310,7 @@ final class LidActionsTests: XCTestCase {
         let post = try XCTUnwrap(h.notifier.posts.last)
         XCTAssertEqual(post.title, SessionManager.incompleteTitle)
         XCTAssertFalse(post.body.contains("not connected"), post.body)
-        XCTAssertTrue(logText().contains("could not restore audio on USB Headset: apply failed"), logText())
+        XCTAssertTrue(logText().contains("Не удалось восстановить звук на устройстве USB Headset: apply failed"), logText())
     }
 
     /// A restore that fails on a connected device is retried by Insomnia
@@ -1330,7 +1330,7 @@ final class LidActionsTests: XCTestCase {
         XCTAssertNil(m.pendingEnd)
         let post = try XCTUnwrap(h.notifier.posts.last)
         XCTAssertEqual(post.title, SessionManager.incompleteTitle)
-        XCTAssertEqual(post.body, "could not restore audio on MacBook Pro Speakers: apply failed (OSStatus -1); kept in the journal to retry. The recovery agent cannot restore output volume. Insomnia tries again in 1 s while it runs, and at its next launch.")
+        XCTAssertEqual(post.body, "Не удалось восстановить звук на устройстве MacBook Pro Speakers: apply failed (OSStatus -1). Запись осталась в журнале для повторной попытки. Агент восстановления не умеет возвращать громкость вывода. Insomnia повторит попытку через 1 с, пока запущена, и при следующем запуске.")
         XCTAssertTrue(h.audio.muted)
 
         h.audio.throwOnApply = false
@@ -1356,11 +1356,11 @@ final class LidActionsTests: XCTestCase {
 
         await m.outputDevicesChanged()
         XCTAssertEqual(h.audio.applied.count, 0)
-        XCTAssertTrue(m.lastError?.hasPrefix("output device change skipped, nothing changed") == true, m.lastError ?? "nil")
-        for _ in 0..<500 where !logText().contains("audio retry skipped") {
+        XCTAssertTrue(m.lastError?.hasPrefix("Смена устройства вывода: пропущено, ничего не изменено") == true, m.lastError ?? "nil")
+        for _ in 0..<500 where !logText().contains("Повтор восстановления звука: пропущено") {
             try await Task.sleep(for: .milliseconds(10))
         }
-        XCTAssertTrue(logText().contains("audio retry skipped"), "the retry ran while the lock was held")
+        XCTAssertTrue(logText().contains("Повтор восстановления звука: пропущено"), "the retry ran while the lock was held")
         XCTAssertEqual(h.audio.applied.count, 0)
         XCTAssertEqual(h.audio.device("usb-headset")?.muted, true)
         XCTAssertEqual(try h.store.loadState()?.savedAudioOutputs.map(\.withoutSaveID), [Self.headsetSaved])
@@ -1389,11 +1389,11 @@ final class LidActionsTests: XCTestCase {
         h.audio.connect("usb-headset", name: "USB Headset", volume: 0.3, muted: true)
         let held = try XCTUnwrap(try RecoveryLock(url: h.home.paths.recoveryLock).tryAcquire())
         await m.outputDevicesChanged()
-        XCTAssertTrue(m.lastError?.hasPrefix("output device change skipped, nothing changed") == true, m.lastError ?? "nil")
+        XCTAssertTrue(m.lastError?.hasPrefix("Смена устройства вывода: пропущено, ничего не изменено") == true, m.lastError ?? "nil")
         await m.start(duration: 3600)
         held.release()
         let startRefused = try XCTUnwrap(m.lastError)
-        XCTAssertTrue(startRefused.hasPrefix("start skipped, nothing changed"), startRefused)
+        XCTAssertTrue(startRefused.hasPrefix("Запуск: пропущено, ничего не изменено"), startRefused)
 
         await m.outputDevicesChanged()
 
@@ -1417,7 +1417,7 @@ final class LidActionsTests: XCTestCase {
             try await Task.sleep(for: .milliseconds(10))
         }
         XCTAssertTrue(logText().contains(gaveUp), logText())
-        XCTAssertEqual(logText().components(separatedBy: "audio retry skipped").count - 1, SessionManager.audioRetryLimit)
+        XCTAssertEqual(logText().components(separatedBy: "Повтор восстановления звука: пропущено").count - 1, SessionManager.audioRetryLimit)
         held.release()
         try await Task.sleep(for: .milliseconds(200))
         XCTAssertEqual(h.audio.applied.count, 0, "nothing retries once the limit is reached")
@@ -1614,7 +1614,7 @@ final class LidActionsTests: XCTestCase {
 
         let held = try XCTUnwrap(try RecoveryLock(url: h.home.paths.recoveryLock).tryAcquire())
         await m.outputDevicesChanged()
-        XCTAssertTrue(m.lastError?.hasPrefix("output device change skipped, nothing changed") == true, m.lastError ?? "nil")
+        XCTAssertTrue(m.lastError?.hasPrefix("Смена устройства вывода: пропущено, ничего не изменено") == true, m.lastError ?? "nil")
         held.release()
         for _ in 0..<500 where m.lastError != nil {
             try await Task.sleep(for: .milliseconds(10))
@@ -2402,7 +2402,7 @@ final class LidActionsTests: XCTestCase {
             XCTAssertTrue(kept.allSatisfy { $0.identity == nil }, "\(moment): \(kept)")
             if !kept.isEmpty {
                 let err = try XCTUnwrap(m2.lastError, moment)
-                XCTAssertTrue(err.contains("Check each one first"), "\(moment): \(err)")
+                XCTAssertTrue(err.contains("Сначала проверьте каждый"), "\(moment): \(err)")
             }
         }
     }
@@ -2427,11 +2427,11 @@ final class LidActionsTests: XCTestCase {
         XCTAssertFalse(s.dockerFrozen)
         XCTAssertEqual(m.state, s)
         let log = logText()
-        XCTAssertTrue(log.contains("could not journal the freeze of Slack (com.tinyspeck.slackmacgap)"), log)
-        XCTAssertTrue(log.contains("its 3 pid(s) were left running"), log)
+        XCTAssertTrue(log.contains("не удалось записать в журнал заморозку Slack (com.tinyspeck.slackmacgap)"), log)
+        XCTAssertTrue(log.contains("Процессов оставлено работать: 3"), log)
         // The status menu shows it, not only the log; Docker failed last.
         let warning = try XCTUnwrap(m.lastError)
-        XCTAssertTrue(warning.contains("could not journal the freeze of Docker (com.docker.docker)"), warning)
+        XCTAssertTrue(warning.contains("не удалось записать в журнал заморозку Docker (com.docker.docker)"), warning)
 
         await actions.onOpen()
         XCTAssertEqual(h.procs.signaled, [])
@@ -2471,8 +2471,8 @@ final class LidActionsTests: XCTestCase {
         XCTAssertEqual(m.effectiveState.frozenProcesses, [], "the status still counts the undone freeze")
         XCTAssertNil(StatusLines.actions(frozenCount: m.effectiveState.frozenPids.count, dockerPaused: m.effectiveState.dockerFrozen, lastGap: nil))
         let warning = try XCTUnwrap(m.lastError, "the failure is only in the log")
-        XCTAssertTrue(warning.contains("could not confirm the freeze of Slack (com.tinyspeck.slackmacgap) in the journal"), warning)
-        XCTAssertTrue(warning.contains("resumed 2 of the 2 pid(s) it had just stopped, so this freeze of Slack is undone"), warning)
+        XCTAssertTrue(warning.contains("не удалось подтвердить в журнале заморозку Slack (com.tinyspeck.slackmacgap)"), warning)
+        XCTAssertTrue(warning.contains("Возобновлено 2 из 2 только что остановленных процессов, поэтому заморозка Slack отменена"), warning)
         XCTAssertTrue(logText().contains("could not clear the entries of an undone freeze from the journal"))
 
         // 101 is still stopped by its other owner; 100 and 102 run again.
@@ -2508,7 +2508,7 @@ final class LidActionsTests: XCTestCase {
         XCTAssertEqual(m.state, after)
         XCTAssertEqual(m.effectiveState, after)
         let warning = try XCTUnwrap(m.lastError)
-        XCTAssertTrue(warning.contains("so this freeze of Slack is undone"), warning)
+        XCTAssertTrue(warning.contains("поэтому заморозка Slack отменена"), warning)
         XCTAssertFalse(logText().contains("could not clear the entries of an undone freeze"))
     }
 
@@ -2534,9 +2534,9 @@ final class LidActionsTests: XCTestCase {
         let status = m.effectiveState
         XCTAssertFalse(status.dockerFrozen, "Docker runs again but the status says paused")
         XCTAssertEqual(status.frozenPids, [100, 101, 102])
-        XCTAssertEqual(StatusLines.actions(frozenCount: status.frozenPids.count, dockerPaused: status.dockerFrozen, lastGap: nil), "3 apps frozen")
+        XCTAssertEqual(StatusLines.actions(frozenCount: status.frozenPids.count, dockerPaused: status.dockerFrozen, lastGap: nil), "заморожено 3 приложения")
         let warning = try XCTUnwrap(m.lastError)
-        XCTAssertTrue(warning.contains("so this freeze of Docker is undone"), warning)
+        XCTAssertTrue(warning.contains("поэтому заморозка Docker отменена"), warning)
     }
 
     /// A pid the undo could not resume stays counted as frozen, and so does
@@ -2559,7 +2559,7 @@ final class LidActionsTests: XCTestCase {
         XCTAssertEqual(status.frozenPids, [100, 101, 102, 401])
         XCTAssertTrue(status.dockerFrozen)
         let warning = try XCTUnwrap(m.lastError)
-        XCTAssertTrue(warning.contains("resumed 1 of the 2 pid(s) it had just stopped, and pid(s) 401 may still be stopped"), warning)
+        XCTAssertTrue(warning.contains("Возобновлено 1 из 2 только что остановленных процессов, а процессы 401 могут оставаться остановленными"), warning)
     }
 
     /// The Docker flag was already set by an earlier freeze whose pid is
@@ -2642,7 +2642,7 @@ final class LidActionsTests: XCTestCase {
         h.procs.deliverPendingStops()
         XCTAssertEqual(h.procs.stoppedNow, [], "a pid stopped after the rollback, and nothing journaled can resume it")
         let log = logText()
-        XCTAssertTrue(log.contains("resumed 3 of the 3 pid(s) it had just stopped"), log)
+        XCTAssertTrue(log.contains("Возобновлено 3 из 3 только что остановленных процессов"), log)
     }
 
     /// Entries without identity come from a build that journaled
@@ -2661,9 +2661,9 @@ final class LidActionsTests: XCTestCase {
         let s = try XCTUnwrap(try h.store.loadState())
         XCTAssertEqual(s.frozenProcesses, [FrozenProcess(pid: 100, startedAt: nil)], "the stopped one stays for a person; the running one is gone")
         let err = try XCTUnwrap(m.lastError)
-        XCTAssertTrue(err.contains("older build"), err)
-        XCTAssertTrue(err.contains("before the stop was confirmed in the journal"), err)
-        XCTAssertTrue(err.contains("Check each one first"), "message must ask for verification before any CONT: \(err)")
+        XCTAssertTrue(err.contains("старая версия"), err)
+        XCTAssertTrue(err.contains("до подтверждения остановки"), err)
+        XCTAssertTrue(err.contains("Сначала проверьте каждый"), "message must ask for verification before any CONT: \(err)")
     }
 }
 

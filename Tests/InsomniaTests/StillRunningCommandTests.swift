@@ -73,7 +73,7 @@ final class StillRunningCommandTests: XCTestCase {
         XCTAssertNil(m.session)
         XCTAssertEqual(h.guardFake.calls, before + ["disablesleep 0"], "a transaction ran while the lock was held for the command")
         XCTAssertEqual(h.notifier.posts.count, postsBefore, "told again on every refused transaction")
-        XCTAssertTrue(try XCTUnwrap(m.commandWarning).hasPrefix("end skipped"), m.commandWarning ?? "")
+        XCTAssertTrue(try XCTUnwrap(m.commandWarning).hasPrefix("Завершение: пропущено"), m.commandWarning ?? "")
         XCTAssertTrue(try XCTUnwrap(m.commandWarning).contains("sudo kill 4242"), m.commandWarning ?? "")
         let startRefused = try XCTUnwrap(m.lastError, "the start refused for the pending end said nothing")
 
@@ -92,7 +92,7 @@ final class StillRunningCommandTests: XCTestCase {
         XCTAssertNil(m.unfinishedCommand)
         XCTAssertFalse(try lockIsHeld(), "recovery lock still held after the command exited")
         XCTAssertNil(try h.store.loadSession())
-        XCTAssertEqual(h.notifier.posts.last?.title, "Session restored")
+        XCTAssertEqual(h.notifier.posts.last?.title, "Сессия восстановлена")
     }
 
     /// The same live `disablesleep 0` exits 1: nothing is confirmed, and the
@@ -151,7 +151,7 @@ final class StillRunningCommandTests: XCTestCase {
         XCTAssertFalse(h.guardFake.lowPowerOn)
         XCTAssertNil(m.unfinishedCommand)
         XCTAssertFalse(try lockIsHeld())
-        XCTAssertEqual(h.notifier.posts.last?.title, "Session restored")
+        XCTAssertEqual(h.notifier.posts.last?.title, "Сессия восстановлена")
         XCTAssertEqual(h.guardFake.unlockedPrivilegedCalls, [])
     }
 
@@ -176,9 +176,9 @@ final class StillRunningCommandTests: XCTestCase {
         await m.reconcile()
 
         let error = try XCTUnwrap(m.lastError)
-        XCTAssertTrue(error.hasPrefix("reconcile skipped, nothing changed"), error)
-        XCTAssertTrue(error.contains("`/usr/bin/sudo -n /usr/bin/pmset -a disablesleep 0`, left running by Insomnia since"), error)
-        XCTAssertTrue(error.contains("still runs as pid 4321"), error)
+        XCTAssertTrue(error.hasPrefix("Сверка при запуске: пропущено, ничего не изменено"), error)
+        XCTAssertTrue(error.contains("`/usr/bin/sudo -n /usr/bin/pmset -a disablesleep 0`, оставленная работать Insomnia с"), error)
+        XCTAssertTrue(error.contains("всё ещё работает как процесс 4321"), error)
         XCTAssertTrue(error.contains("sudo kill 4321"), error)
         let notices = h.notifier.posts.filter { $0.title == SessionManager.commandRunningTitle }
         XCTAssertEqual(notices.count, 1)
@@ -206,11 +206,11 @@ final class StillRunningCommandTests: XCTestCase {
         let otherBoot = ProcessIdentity(startedAt: recorded.startedAt, startedAtMicros: recorded.startedAtMicros, bootSession: "another-boot")
         let running: (ProcessIdentity) -> ProcessLookup = { .present(ProcessSignalState(ppid: 1, stopped: false, identity: $0)) }
         let cases: [(name: String, identity: ProcessIdentity?, live: ProcessLookup, says: String)] = [
-            ("gone", recorded, .absent, "has exited since, so another process holds it"),
-            ("reused", recorded, running(reused), "has exited since, so another process holds it"),
-            ("other boot", recorded, running(otherBoot), "has exited since, so another process holds it"),
-            ("unreadable", recorded, .unreadable(EPERM), "cannot confirm that pid 4321 is still that command, so it names no process to stop"),
-            ("no identity", nil, running(recorded), "cannot confirm that pid 4321 is still that command, so it names no process to stop"),
+            ("gone", recorded, .absent, "с тех пор завершилась, значит, блокировку держит другой процесс"),
+            ("reused", recorded, running(reused), "с тех пор завершилась, значит, блокировку держит другой процесс"),
+            ("other boot", recorded, running(otherBoot), "с тех пор завершилась, значит, блокировку держит другой процесс"),
+            ("unreadable", recorded, .unreadable(EPERM), "не может подтвердить, что процесс 4321 по-прежнему эта команда, поэтому не называет процесс для остановки"),
+            ("no identity", nil, running(recorded), "не может подтвердить, что процесс 4321 по-прежнему эта команда, поэтому не называет процесс для остановки"),
         ]
         let other = try XCTUnwrap(try RecoveryLock(url: h.home.paths.recoveryLock).tryAcquire())
         defer { other.release() }
@@ -227,7 +227,7 @@ final class StillRunningCommandTests: XCTestCase {
             await m.reconcile()
 
             let error = try XCTUnwrap(m.lastError, c.name)
-            XCTAssertTrue(error.hasPrefix("reconcile skipped, nothing changed"), "\(c.name): \(error)")
+            XCTAssertTrue(error.hasPrefix("Сверка при запуске: пропущено, ничего не изменено"), "\(c.name): \(error)")
             XCTAssertTrue(error.contains(c.says), "\(c.name): \(error)")
             XCTAssertFalse(error.contains("kill"), "\(c.name): a kill offered for an unverified pid: \(error)")
             XCTAssertNotNil(h.store.loadUnfinishedCommand(), "\(c.name): the record went without the lock")
@@ -301,7 +301,7 @@ final class StillRunningCommandTests: XCTestCase {
         try await Task.sleep(for: .seconds(1.5))
 
         XCTAssertNil(m.session)
-        XCTAssertTrue(m.lastError?.hasPrefix("reconcile skipped, nothing changed") == true, m.lastError ?? "")
+        XCTAssertTrue(m.lastError?.hasPrefix("Сверка при запуске: пропущено, ничего не изменено") == true, m.lastError ?? "")
         XCTAssertEqual(h.guardFake.calls, [], "pmset ran without the lock")
         XCTAssertEqual(try h.store.loadSession(), session)
         XCTAssertEqual(try h.store.loadState(), journal)
@@ -587,7 +587,7 @@ final class StillRunningCommandTests: XCTestCase {
         XCTAssertEqual(try h.store.loadState()?.lowPowerSetByUs, true, "ownership dropped with the rollback still running")
         XCTAssertTrue(try lockIsHeld(), "recovery lock released with the rollback still running")
         let enableFailed = try XCTUnwrap(m.lastError)
-        XCTAssertTrue(enableFailed.hasPrefix("could not enable low power mode"), enableFailed)
+        XCTAssertTrue(enableFailed.hasPrefix("Не удалось включить режим энергосбережения"), enableFailed)
         XCTAssertTrue(try XCTUnwrap(m.commandWarning).contains("sudo kill 4242"), m.commandWarning ?? "")
         var ran = false
         let admitted = await m.runExclusive("probe") { ran = true }
@@ -606,7 +606,7 @@ final class StillRunningCommandTests: XCTestCase {
         )
         XCTAssertTrue(h.guardFake.lowPowerOn)
         XCTAssertEqual(try h.store.loadState()?.lowPowerSetByUs, true)
-        XCTAssertEqual(h.notifier.posts.last?.title, "Low Power Mode on")
+        XCTAssertEqual(h.notifier.posts.last?.title, "Режим энергосбережения включён")
         XCTAssertFalse(try lockIsHeld())
         XCTAssertNil(m.commandWarning, "the menu still names the rollback after it exited")
         XCTAssertEqual(m.lastError, enableFailed)
@@ -926,7 +926,7 @@ final class StillRunningCommandTests: XCTestCase {
         )
         XCTAssertTrue(h.guardFake.lowPowerOn)
         XCTAssertEqual(try h.store.loadState()?.lowPowerSetByUs, true)
-        XCTAssertEqual(h.notifier.posts.last?.title, "Low Power Mode on")
+        XCTAssertEqual(h.notifier.posts.last?.title, "Режим энергосбережения включён")
         XCTAssertFalse(try lockIsHeld())
     }
 
@@ -1144,7 +1144,7 @@ final class StillRunningCommandTests: XCTestCase {
         XCTAssertEqual(h.display.sets, [], "written on a journal not read")
         XCTAssertEqual(try Data(contentsOf: stateFile), broken, "an unreadable journal was overwritten")
         let log = (try? String(contentsOf: h.home.paths.logFile, encoding: .utf8)) ?? ""
-        XCTAssertTrue(log.contains("low power mode is off, and the clear and the display write owed after it (0.6) wait for the journal to read again"), log)
+        XCTAssertTrue(log.contains("Режим энергосбережения выключен, а очистка записи и возврат яркости экрана после него (0.6) ждут, пока журнал снова станет читаемым"), log)
         XCTAssertFalse(try lockIsHeld())
 
         try journal.write(to: stateFile)
@@ -1156,7 +1156,7 @@ final class StillRunningCommandTests: XCTestCase {
         XCTAssertEqual(h.display.brightness, 0.6)
         XCTAssertFalse(h.guardFake.calls.dropFirst(before.count).contains("lowpowermode 0"), "the mode known off was switched off again")
         XCTAssertEqual(try h.store.loadState(), RuntimeState.clean)
-        XCTAssertFalse((m.lastError ?? "").contains("wait for the journal to read again"), m.lastError ?? "")
+        XCTAssertFalse((m.lastError ?? "").contains("ждут, пока журнал снова станет читаемым"), m.lastError ?? "")
     }
 
     /// The same, and the file that reads again no longer owes the write:
@@ -1250,8 +1250,8 @@ final class StillRunningCommandTests: XCTestCase {
         await waitUntil("the lock never went with the exit") { m.unfinishedCommand == nil }
         XCTAssertNil(m.commandWarning)
         let error = try XCTUnwrap(m.lastError, "the failed clear left the menu silent")
-        XCTAssertTrue(error.hasPrefix("low power mode switched off (`/usr/bin/sudo -n /usr/bin/pmset lowpowermode 0` (pid 4242) exited 0) but the journal entry could not be cleared"), error)
-        XCTAssertTrue(error.hasSuffix("it will be retried"), error)
+        XCTAssertTrue(error.hasPrefix("режим энергосбережения выключен (`/usr/bin/sudo -n /usr/bin/pmset lowpowermode 0` (pid 4242) завершилась с кодом 0), но запись в журнале не удалось убрать"), error)
+        XCTAssertTrue(error.hasSuffix("Попытка повторится"), error)
         XCTAssertEqual(try h.store.loadState()?.lowPowerSetByUs, true)
         XCTAssertFalse(h.guardFake.lowPowerOn)
         try await Task.sleep(for: .milliseconds(500))
@@ -1280,7 +1280,7 @@ final class StillRunningCommandTests: XCTestCase {
         exitTheRollback()
 
         await waitUntil("the check never ran") { h.guardFake.calls.count == before.count + 2 && m.unfinishedCommand == nil }
-        await waitUntil("the failed clear left the menu silent") { m.lastError?.hasPrefix("low power mode confirmed off after the power command but the journal entry could not be cleared") == true }
+        await waitUntil("the failed clear left the menu silent") { m.lastError?.hasPrefix("режим энергосбережения подтверждён выключенным после команды питания, но запись в журнале не удалось убрать") == true }
         XCTAssertEqual(Array(h.guardFake.calls.dropFirst(before.count)), ["pmset -g custom", "lowpowermode 0"])
         XCTAssertEqual(try h.store.loadState()?.lowPowerSetByUs, true)
         XCTAssertNil(m.commandWarning)
@@ -1309,8 +1309,8 @@ final class StillRunningCommandTests: XCTestCase {
         await gate.waitUntilStarted()
         XCTAssertNil(m.commandWarning)
         let error = try XCTUnwrap(m.lastError, "the failed clear left the menu silent")
-        XCTAssertTrue(error.hasPrefix("sleep restored (`/usr/bin/sudo -n /usr/bin/pmset disablesleep 0` (pid 4242) exited 0) but the journal entry could not be cleared"), error)
-        XCTAssertTrue(error.hasSuffix("it will be retried"), error)
+        XCTAssertTrue(error.hasPrefix("сон возвращён (`/usr/bin/sudo -n /usr/bin/pmset disablesleep 0` (pid 4242) завершилась с кодом 0), но запись в журнале не удалось убрать"), error)
+        XCTAssertTrue(error.hasSuffix("Попытка повторится"), error)
         XCTAssertEqual(try h.store.loadState()?.sleepDisabledByUs, true)
 
         try lockJournal(false)
@@ -1342,7 +1342,7 @@ final class StillRunningCommandTests: XCTestCase {
 
         await waitUntil("the lock never went with the exit") { m.unfinishedCommand == nil }
         let error = try XCTUnwrap(m.lastError, "the unreadable journal left the menu silent")
-        XCTAssertTrue(error.hasPrefix("`/usr/bin/sudo -n /usr/bin/pmset lowpowermode 0` (pid 4242) exited 0, but the journal could not be read to clear its entry"), error)
+        XCTAssertTrue(error.hasPrefix("`/usr/bin/sudo -n /usr/bin/pmset lowpowermode 0` (pid 4242) завершилась с кодом 0, но журнал не удалось прочитать, чтобы убрать её запись"), error)
         XCTAssertEqual(try Data(contentsOf: h.home.paths.stateFile), broken, "an unreadable journal was overwritten")
         XCTAssertFalse(try lockIsHeld())
 

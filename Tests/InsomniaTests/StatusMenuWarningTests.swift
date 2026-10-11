@@ -129,9 +129,9 @@ final class StatusMenuWarningTests: XCTestCase {
         let unnamed = SavedAudioOutput(deviceUID: "70-8C-F2:output", name: nil, volume: 0.5, muted: false, saveID: nil)
         let items = StatusMenu.items(sessionActive: false, sleepHeld: false, machine: nil, actions: nil, throttledBrowsers: [], error: nil, outputsWaiting: [headset, unnamed])
         XCTAssertEqual(Array(items.prefix(4)), [
-            StatusMenu.Item(title: "\u{26A0} USB Headset is still muted from a lid close; Insomnia restores it when it reconnects", kind: .warning),
+            StatusMenu.Item(title: "\u{26A0} USB Headset: звук всё ещё выключен после закрытия крышки; Insomnia вернёт его, когда устройство подключится", kind: .warning),
             StatusMenu.Item(title: "Stop waiting for USB Headset", kind: .stopWaitingForOutput(headset)),
-            StatusMenu.Item(title: "\u{26A0} 70-8C-F2:output is still muted from a lid close; Insomnia restores it when it reconnects", kind: .warning),
+            StatusMenu.Item(title: "\u{26A0} 70-8C-F2:output: звук всё ещё выключен после закрытия крышки; Insomnia вернёт его, когда устройство подключится", kind: .warning),
             StatusMenu.Item(title: "Stop waiting for 70-8C-F2:output", kind: .stopWaitingForOutput(unnamed)),
         ])
         let menu = StatusMenu.menu(

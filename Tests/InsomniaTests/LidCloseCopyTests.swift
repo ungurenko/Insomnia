@@ -30,15 +30,15 @@ final class LidCloseCopyTests: XCTestCase {
 
     func testMicrophoneNoteSaysTheMicIsDisconnectedAndWhatToUseInstead() {
         let note = SettingsView.microphoneNote
-        XCTAssertTrue(note.contains("closing the lid disconnects the built-in microphone in hardware"), note)
-        XCTAssertTrue(note.contains("AirPods or an external mic"), note)
+        XCTAssertTrue(note.contains("закрытая крышка физически отключает встроенный микрофон"), note)
+        XCTAssertTrue(note.contains("AirPods или внешний микрофон"), note)
     }
 
     /// The note sits right under the mute toggle, next to the other
     /// lid-close options.
     func testSettingsShowsTheMicrophoneNoteUnderTheMuteToggle() throws {
         let lid = try lidSection()
-        let toggle = try XCTUnwrap(lid.range(of: #"Toggle("Mute audio on lid close", isOn: bind(\.muteOnLidClose))"#))
+        let toggle = try XCTUnwrap(lid.range(of: #"Toggle("Выключать звук при закрытии крышки", isOn: bind(\.muteOnLidClose))"#))
         let next = lid[toggle.upperBound...].trimmingCharacters(in: .whitespacesAndNewlines)
         XCTAssertTrue(next.hasPrefix("Text(Self.microphoneNote)"), String(next.prefix(80)))
     }
@@ -54,6 +54,6 @@ final class LidCloseCopyTests: XCTestCase {
         let lid = try lidSection()
         XCTAssertTrue(lid.contains("if let notice = manager.config.lidCloseDefaultsNotice"))
         XCTAssertTrue(lid.contains("Text(notice.settingsLine)"))
-        XCTAssertTrue(lid.contains(#"Button("Dismiss") { manager.dismissLidCloseNotice() }"#))
+        XCTAssertTrue(lid.contains(#"Button("Скрыть") { manager.dismissLidCloseNotice() }"#))
     }
 }
