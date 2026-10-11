@@ -1,4 +1,4 @@
-# A build from before the fork has the original bundle id; ask it too.for quit_id in com.ungurenko.insomnia com.kgarg.insomnia; do  "$OSASCRIPT" -e "tell application id \"$quit_id\" to quit" >/dev/null 2>&1 || truedone#!/bin/bash
+#!/bin/bash
 # Reverse install.sh. Quits the app, takes the recovery lock, runs the current
 # backstop with --force under that same lock (from a source checkout: the
 # checkout's copy when the installed app declares the interface version it

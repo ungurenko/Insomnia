@@ -1,4 +1,4 @@
-# A build from before the fork has the original bundle id; ask it too.for quit_id in com.ungurenko.insomnia com.kgarg.insomnia; do  "$OSASCRIPT" -e "tell application id \"$quit_id\" to quit" >/dev/null 2>&1 || truedone#!/bin/bash
+#!/bin/bash
 # Install Insomnia: put Insomnia.app (with backstop.sh sealed inside it) in
 # ~/Applications, install the LaunchAgent that verifies the bundle and runs
 # that script, and write the sudoers rule. Idempotent; asks for sudo once (for
