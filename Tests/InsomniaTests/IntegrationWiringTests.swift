@@ -117,7 +117,7 @@ final class IntegrationWiringTests: XCTestCase {
         await fulfillment(of: [notifier.posted], timeout: 60)
         services.cancelBrowserTasks()
 
-        XCTAssertEqual(notifier.posts.map(\.title), ["Browser not relaunched"])
+        XCTAssertEqual(notifier.posts.map(\.title), ["Браузер не перезапущен"])
         XCTAssertEqual(notifier.posts.map(\.body), ["Chrome не запущен. Ничего не закрывалось и не перезапускалось."])
         XCTAssertEqual(services.status.relaunchProblems, ["com.google.Chrome": "Chrome не запущен. Ничего не закрывалось и не перезапускалось."])
         XCTAssertEqual(processes.quitRequests.count, 0)
@@ -352,7 +352,7 @@ final class IntegrationWiringTests: XCTestCase {
 
         await services.relaunchUnthrottled(Self.chrome)
 
-        XCTAssertEqual(notifier.posts.map(\.title), ["Browser not relaunched"])
+        XCTAssertEqual(notifier.posts.map(\.title), ["Браузер не перезапущен"])
         XCTAssertEqual(notifier.posts.map(\.body), ["Chrome не закрылся за 10 с, поэтому перезапуска не было. Он может закрыться позже. Если это случится, откройте его снова сами."])
         XCTAssertEqual(processes.terminated, [[42]])
         XCTAssertEqual(processes.launches.count, 0)

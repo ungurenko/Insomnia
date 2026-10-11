@@ -133,8 +133,8 @@ in System Settings > Privacy & Security.
 
 ```bash
 shasum -a 256 -c SHA256SUMS
-gh attestation verify <zip> -R krishhgg/Insomnia \
-  --signer-workflow krishhgg/Insomnia/.github/workflows/release.yml \
+gh attestation verify <zip> -R ungurenko/Insomnia \
+  --signer-workflow ungurenko/Insomnia/.github/workflows/release.yml \
   --source-ref <ref> --source-digest <commit>
 ```
 

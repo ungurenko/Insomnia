@@ -18,7 +18,7 @@ import Foundation
 struct Paths: Sendable, Equatable {
     static let environmentKey = "INSOMNIA_HOME"
     static let backstopLabel = "com.insomnia.backstop"
-    static let bundleIdentifier = "com.kgarg.insomnia"
+    static let bundleIdentifier = "com.ungurenko.insomnia"
 
     let appSupport: URL
     let logs: URL

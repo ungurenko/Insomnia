@@ -127,7 +127,7 @@ final class PackagingTests: XCTestCase {
         try fm.createDirectory(at: bundle.appendingPathComponent("Contents/Resources"), withIntermediateDirectories: true)
         try fm.copyItem(atPath: "/usr/bin/true", toPath: bundle.appendingPathComponent("Contents/MacOS/\(name)").path)
         let info: [String: Any] = [
-            "CFBundleExecutable": name, "CFBundleIdentifier": "com.kgarg.insomnia.packaging-test",
+            "CFBundleExecutable": name, "CFBundleIdentifier": "com.ungurenko.insomnia.packaging-test",
             "CFBundlePackageType": "APPL", "CFBundleShortVersionString": "0.0.1",
         ]
         try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)

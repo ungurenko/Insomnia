@@ -1,4 +1,4 @@
-#!/bin/bash
+# A build from before the fork has the original bundle id; ask it too.for quit_id in com.ungurenko.insomnia com.kgarg.insomnia; do  "$OSASCRIPT" -e "tell application id \"$quit_id\" to quit" >/dev/null 2>&1 || truedone#!/bin/bash
 # Install Insomnia: put Insomnia.app (with backstop.sh sealed inside it) in
 # ~/Applications, install the LaunchAgent that verifies the bundle and runs
 # that script, and write the sudoers rule. Idempotent; asks for sudo once (for
@@ -71,7 +71,7 @@ LOCK_TIMEOUT_SECONDS=10
 CALL_TIMEOUT_SECONDS=30
 
 # What a prebuilt bundle (--app) must be.
-BUNDLE_ID=com.kgarg.insomnia
+BUNDLE_ID=com.ungurenko.insomnia
 
 # The folder this script is in. build-app.sh and backstop.sh are taken from
 # there, and only when it is the scripts/ folder of a source checkout, with
@@ -430,7 +430,10 @@ step "Staging Insomnia.app"
 # and nothing of the old install is overwritten while it is still running.
 if "$PGREP" -x Insomnia >/dev/null 2>&1; then
   echo "Insomnia is running; quitting it first (this ends any session)."
-  "$OSASCRIPT" -e 'tell application id "com.kgarg.insomnia" to quit' >/dev/null 2>&1 || true
+  # A build from before the fork has the original bundle id; ask it too.
+  for quit_id in com.ungurenko.insomnia com.kgarg.insomnia; do
+    "$OSASCRIPT" -e "tell application id \"$quit_id\" to quit" >/dev/null 2>&1 || true
+  done
   for (( i = 0; i < QUIT_WAIT_SECONDS; i++ )); do
     "$PGREP" -x Insomnia >/dev/null 2>&1 || break
     sleep 1

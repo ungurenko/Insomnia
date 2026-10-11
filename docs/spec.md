@@ -1302,7 +1302,7 @@ Insomnia/
 ## Install
 
 ```
-git clone https://github.com/krishhgg/Insomnia.git && cd Insomnia
+git clone https://github.com/ungurenko/Insomnia.git && cd Insomnia
 ./scripts/install.sh      # asks for sudo once, for the sudoers file
 ```
 

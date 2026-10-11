@@ -6,7 +6,7 @@ description: Install or upgrade Insomnia, the macOS menu bar app that keeps a Ma
 # Install Insomnia
 
 The exact commands are in
-[docs/install.md](https://github.com/krishhgg/Insomnia/blob/main/docs/install.md).
+[docs/install.md](https://github.com/ungurenko/Insomnia/blob/main/docs/install.md).
 Read that page, then follow these steps. Never run `sudo` yourself and never
 pass a password to it. When a step needs the administrator password, give the
 user the exact command to run in Terminal and wait for them to say it finished.

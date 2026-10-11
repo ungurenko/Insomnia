@@ -408,14 +408,14 @@ final class ReleaseWorkflowTests: XCTestCase {
         XCTAssertTrue(try readmeInstallSection().contains("Apple Silicon"), "the README's Install section")
     }
 
-    /// The README's Install section gives the coding agent prompt for either
-    /// channel and points at docs/install.md, which lets a reader choose a
-    /// channel and sends v0.1.0, which no workflow built, to its own release
-    /// notes.
-    func testTheReadmeOffersBothChannelsAndSetsV010Apart() throws {
+    /// The README's Install section gives the coding agent prompt for this
+    /// repository's install skill and points at docs/install.md, which lets
+    /// a reader choose a channel and sends v0.1.0, which no workflow built,
+    /// to its own release notes.
+    func testTheReadmeLinksTheInstallSkillAndTheGuide() throws {
         let install = try readmeInstallSection().split(whereSeparator: \.isWhitespace).joined(separator: " ")
-        for phrase in ["Install the latest stable Insomnia release by following https://github.com/krishhgg/Insomnia/blob/main/skills/install-insomnia/SKILL.md",
-                       "the newest Insomnia nightly prerelease", "](docs/install.md)"] {
+        for phrase in ["Установи последний стабильный релиз Insomnia по инструкции https://github.com/ungurenko/Insomnia/blob/main/skills/install-insomnia/SKILL.md",
+                       "](docs/install.md)"] {
             XCTAssertTrue(install.contains(phrase), "the README's Install section lacks: \(phrase)")
         }
         let skill = try String(contentsOf: repoRoot.appendingPathComponent("skills/install-insomnia/SKILL.md"), encoding: .utf8)
@@ -434,7 +434,7 @@ final class ReleaseWorkflowTests: XCTestCase {
 
     private func readmeInstallSection() throws -> String {
         let readme = try String(contentsOf: repoRoot.appendingPathComponent("README.md"), encoding: .utf8)
-        let install = try XCTUnwrap(readme.range(of: "\n## Install\n"), "README has no Install section")
+        let install = try XCTUnwrap(readme.range(of: "\n## Установка\n"), "README has no Install section")
         let end = readme.range(of: "\n## ", range: install.upperBound..<readme.endIndex)?.lowerBound ?? readme.endIndex
         return String(readme[install.upperBound..<end])
     }

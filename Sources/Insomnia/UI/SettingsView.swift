@@ -524,7 +524,7 @@ struct SettingsView: View {
                 Button("Открыть объекты входа") { loginItem.openLoginItems() }
             }
         } else if manager.config.launchAtLogin, !loginItem.isRegistered {
-            Text("Автозапуск: macOS сообщает, что он «\(loginItem.status.description)». Включите переключатель, чтобы зарегистрировать его снова.")
+            Text("Автозапуск: macOS сообщает, что он «\(loginItem.status.userText)». Включите переключатель, чтобы зарегистрировать его снова.")
                 .font(.caption)
                 .foregroundStyle(.orange)
         }
@@ -588,6 +588,7 @@ struct SettingsView: View {
         }
         .buttonStyle(.plain)
         .help("Удалить")
+        .accessibilityLabel("Удалить")
     }
 }
 

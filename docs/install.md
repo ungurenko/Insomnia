@@ -10,7 +10,7 @@ Requires **macOS 26 or later on an Apple Silicon Mac**.
 ## Channels
 
 Insomnia is published on two channels on the
-[releases page](https://github.com/krishhgg/Insomnia/releases):
+[releases page](https://github.com/ungurenko/Insomnia/releases):
 
 - Stable: the release GitHub marks Latest, tagged `v<version>`. Use this one
   unless you want to try changes that are not in a stable release yet.
@@ -44,7 +44,7 @@ You need `gh`, the [GitHub CLI](https://cli.github.com).
    one marked Latest:
 
    ```bash
-   gh release download --repo krishhgg/Insomnia --pattern '*.zip' --pattern SHA256SUMS
+   gh release download --repo ungurenko/Insomnia --pattern '*.zip' --pattern SHA256SUMS
    ```
 
    For the newest nightly, paste this whole block. It reads every page of
@@ -57,7 +57,7 @@ You need `gh`, the [GitHub CLI](https://cli.github.com).
    ```bash
    insomnia_nightly() {
      local list tag
-     list="$(gh api --paginate 'repos/krishhgg/Insomnia/releases?per_page=100' \
+     list="$(gh api --paginate 'repos/ungurenko/Insomnia/releases?per_page=100' \
        --jq '.[] | select(.prerelease and (.draft | not) and (.tag_name | startswith("nightly-")))
          | "\(.published_at) \(.tag_name)"')" ||
        { echo "Could not read the release list. Nothing was downloaded." >&2; return 1; }
@@ -72,7 +72,7 @@ You need `gh`, the [GitHub CLI](https://cli.github.com).
        printf 'Unexpected nightly tag: %s. Nothing was downloaded.\n' "$tag" >&2
        return 1
      fi
-     gh release download "$tag" --repo krishhgg/Insomnia --pattern '*.zip' --pattern SHA256SUMS
+     gh release download "$tag" --repo ungurenko/Insomnia --pattern '*.zip' --pattern SHA256SUMS
    }
    insomnia_nightly
    ```
@@ -86,8 +86,8 @@ You need `gh`, the [GitHub CLI](https://cli.github.com).
 
    ```bash
    shasum -a 256 -c SHA256SUMS
-   gh attestation verify <zip> -R krishhgg/Insomnia \
-     --signer-workflow krishhgg/Insomnia/.github/workflows/release.yml \
+   gh attestation verify <zip> -R ungurenko/Insomnia \
+     --signer-workflow ungurenko/Insomnia/.github/workflows/release.yml \
      --source-ref <ref> --source-digest <commit>
    ```
 
@@ -131,7 +131,7 @@ nightly tag for the newest code, rather than `main`. If the releases page has
 no release yet, leave out `--branch v<version>` to build `main`:
 
 ```bash
-git clone --branch v<version> --depth 1 https://github.com/krishhgg/Insomnia.git
+git clone --branch v<version> --depth 1 https://github.com/ungurenko/Insomnia.git
 cd Insomnia
 ./scripts/install.sh
 open "$HOME/Applications/Insomnia.app"

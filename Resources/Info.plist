@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
+	<string>ru</string>
 	<key>CFBundleExecutable</key>
 	<string>Insomnia</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.kgarg.insomnia</string>
+	<string>com.ungurenko.insomnia</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -19,7 +19,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.1.0</string>
+	<string>0.2.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>LSMinimumSystemVersion</key>
@@ -29,14 +29,14 @@
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSLocationUsageDescription</key>
-	<string>Insomnia needs your location permission so macOS lets it see Wi-Fi network names and rejoin your hotspot.</string>
+	<string>Insomnia просит доступ к геолокации: без него macOS не показывает названия сетей Wi-Fi, и приложение не сможет переподключиться к вашему хотспоту.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Insomnia needs your location permission so macOS lets it see Wi-Fi network names and rejoin your hotspot.</string>
+	<string>Insomnia просит доступ к геолокации: без него macOS не показывает названия сетей Wi-Fi, и приложение не сможет переподключиться к вашему хотспоту.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>InsomniaResumeFrozenVersion</key>
 	<integer>1</integer>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2026 Krish Garg. MIT License.</string>
+	<string>Copyright © 2026 Krish Garg, Александр Унгуренко. MIT License.</string>
 </dict>
 </plist>

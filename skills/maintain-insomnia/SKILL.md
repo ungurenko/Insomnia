@@ -5,11 +5,11 @@ description: Check on, troubleshoot, or uninstall an installed Insomnia (the mac
 
 # Maintain Insomnia
 
-Reference pages in https://github.com/krishhgg/Insomnia:
-[docs/recovery.md](https://github.com/krishhgg/Insomnia/blob/main/docs/recovery.md),
-[docs/install.md](https://github.com/krishhgg/Insomnia/blob/main/docs/install.md),
-[docs/lid-close.md](https://github.com/krishhgg/Insomnia/blob/main/docs/lid-close.md) and
-[docs/extras.md](https://github.com/krishhgg/Insomnia/blob/main/docs/extras.md).
+Reference pages in https://github.com/ungurenko/Insomnia:
+[docs/recovery.md](https://github.com/ungurenko/Insomnia/blob/main/docs/recovery.md),
+[docs/install.md](https://github.com/ungurenko/Insomnia/blob/main/docs/install.md),
+[docs/lid-close.md](https://github.com/ungurenko/Insomnia/blob/main/docs/lid-close.md) and
+[docs/extras.md](https://github.com/ungurenko/Insomnia/blob/main/docs/extras.md).
 
 ## Rules
 

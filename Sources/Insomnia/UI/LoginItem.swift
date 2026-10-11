@@ -27,7 +27,18 @@ enum LoginItemStatus: Equatable, Sendable {
         }
     }
 
-    /// For the log and the Settings note.
+    /// For the Settings note.
+    var userText: String {
+        switch self {
+        case .notRegistered: "не зарегистрирован"
+        case .enabled: "включён"
+        case .requiresApproval: "ждёт подтверждения"
+        case .notFound: "не найден в macOS"
+        case let .unknown(raw): "в неизвестном состоянии \(raw)"
+        }
+    }
+
+    /// For the log.
     var description: String {
         switch self {
         case .notRegistered: "not registered"

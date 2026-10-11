@@ -122,7 +122,7 @@ final class KeychainQueue: Sendable {
     /// The one the app uses, for the failover's reads and Settings' saves.
     static let shared = KeychainQueue()
 
-    private let queue = DispatchQueue(label: "com.kgarg.insomnia.keychain")
+    private let queue = DispatchQueue(label: "com.ungurenko.insomnia.keychain")
 
     init() {}
 
